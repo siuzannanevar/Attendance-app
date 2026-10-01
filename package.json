@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "bot:dev": "tsx --env-file=.env.local scripts/dev-bot.ts"
+    "bot:dev": "tsx --env-file=.env.local scripts/dev-bot.ts",
+    "bot:commands": "tsx --env-file=.env.local scripts/set-commands.ts"
   },
   "dependencies": {
     "grammy": "^1.46.0",

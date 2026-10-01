@@ -2,20 +2,22 @@ import { InlineKeyboard } from "grammy";
 import type { Bot } from "grammy";
 import { sql } from "@/lib/db";
 import { ensureUser } from "./helpers";
+import { t, LOCALES, type Lang } from "./i18n";
 
-function makeKeyboard(trainingId: string | number) {
+function makeKeyboard(trainingId: string | number, lang: Lang) {
   return new InlineKeyboard()
-    .text("✅ Иду", `rsvp:${trainingId}:going`)
-    .text("❌ Не иду", `rsvp:${trainingId}:not_going`);
+    .text(t(lang, "btn_going"), `rsvp:${trainingId}:going`)
+    .text(t(lang, "btn_not_going"), `rsvp:${trainingId}:not_going`);
 }
 
-// Собирает текст сообщения с опросом и кнопки из данных в базе
+// Собирает текст сообщения с опросом (на языке команды) и кнопки из данных в базе
 async function render(trainingId: string | number) {
-  const [t] = await sql`
+  const [row] = await sql`
     select tr.starts_at, tr.place, tr.needed_players,
-           tm.id as team_id, tm.name as team_name, tm.timezone
+           tm.id as team_id, tm.name as team_name, tm.timezone, tm.language
     from trainings tr join teams tm on tm.id = tr.team_id
     where tr.id = ${trainingId}`;
+  const lang = row.language as Lang;
 
   const going = await sql`
     select u.first_name
@@ -26,35 +28,35 @@ async function render(trainingId: string | number) {
     select count(*)::int as not_going from rsvps
     where training_id = ${trainingId} and status = 'not_going'`;
   const [{ members }] = await sql`
-    select count(*)::int as members from memberships where team_id = ${t.team_id}`;
+    select count(*)::int as members from memberships where team_id = ${row.team_id}`;
 
-  const when = new Intl.DateTimeFormat("ru-RU", {
+  const when = new Intl.DateTimeFormat(LOCALES[lang], {
     weekday: "short",
     day: "2-digit",
     month: "2-digit",
     hour: "2-digit",
     minute: "2-digit",
-    timeZone: t.timezone,
-  }).format(t.starts_at);
+    timeZone: row.timezone,
+  }).format(row.starts_at);
 
-  const need = t.needed_players ? ` из ${t.needed_players}` : "";
+  const count = row.needed_players ? `${going.length}/${row.needed_players}` : `${going.length}`;
   const noAnswer = Math.max(0, members - going.length - not_going);
 
   const lines: (string | null)[] = [
-    `📅 ${t.team_name}: тренировка`,
+    t(lang, "poll_title", { team: row.team_name }),
     `🕒 ${when}`,
-    t.place ? `📍 ${t.place}` : null,
+    row.place ? `📍 ${row.place}` : null,
     "",
-    `✅ Идут (${going.length}${need}):`,
+    t(lang, "poll_going", { count }),
     ...going.map((g, i) => `${i + 1}. ${g.first_name}`),
     "",
-    `❌ Не идут: ${not_going}`,
-    `⏳ Не ответили: ${noAnswer}`,
+    t(lang, "poll_not_going", { n: not_going }),
+    t(lang, "poll_no_answer", { n: noAnswer }),
   ];
 
   return {
     text: lines.filter((l): l is string => l !== null).join("\n"),
-    keyboard: makeKeyboard(trainingId),
+    keyboard: makeKeyboard(trainingId, lang),
   };
 }
 
@@ -74,37 +76,29 @@ async function toTimestamp(tz: string, day: number, month: number, hour: number,
 
 export function registerTrainings(bot: Bot) {
   bot.command("newtraining", async (ctx) => {
-    if (ctx.chat.type === "private") {
-      return ctx.reply("Эту команду нужно писать в группе команды (после /linkgroup).");
-    }
     const user = await ensureUser(ctx);
+    if (ctx.chat.type === "private") return ctx.reply(t(user.lang, "newtraining_private"));
 
     const [team] = await sql`
-      select t.id, t.name, t.timezone
-      from teams t join memberships m on m.team_id = t.id
-      where t.chat_id = ${ctx.chat.id} and m.user_id = ${user.id} and m.role = 'admin'`;
-    if (!team) {
-      return ctx.reply("Эта группа не привязана к команде, или вы не организатор этой команды. Привязка: /linkgroup");
-    }
+      select tm.id, tm.name, tm.timezone, tm.language
+      from teams tm join memberships m on m.team_id = tm.id
+      where tm.chat_id = ${ctx.chat.id} and m.user_id = ${user.id} and m.role = 'admin'`;
+    if (!team) return ctx.reply(t(user.lang, "newtraining_notlinked"));
+    const lang = team.language as Lang;
 
     const m = String(ctx.match)
       .trim()
       .match(/^(\d{1,2})\.(\d{1,2})\s+(\d{1,2}):(\d{2})\s+(\d{1,3})\s*(.*)$/);
-    if (!m) {
-      return ctx.reply(
-        "Формат: /newtraining ДД.ММ ЧЧ:ММ МИН_ИГРОКОВ Место\n" +
-          "Пример: /newtraining 15.10 19:00 12 Спортзал колледжа"
-      );
-    }
+    if (!m) return ctx.reply(t(lang, "newtraining_format"));
     const [, dd, mm, hh, mi, need, place] = m;
 
     let ts: Date | null = null;
     try {
       ts = await toTimestamp(team.timezone, Number(dd), Number(mm), Number(hh), Number(mi));
     } catch {
-      return ctx.reply("Похоже, дата или время указаны неверно. Пример: 15.10 19:00");
+      return ctx.reply(t(lang, "newtraining_baddate"));
     }
-    if (!ts) return ctx.reply("Не получилось определить дату. Пример: 15.10 19:00");
+    if (!ts) return ctx.reply(t(lang, "newtraining_nodate"));
 
     const [tr] = await sql`
       insert into trainings (team_id, starts_at, place, needed_players, created_by)
@@ -119,32 +113,29 @@ export function registerTrainings(bot: Bot) {
       where id = ${tr.id}`;
   });
 
-  // Нажатие кнопок «Иду» / «Не иду»
+  // Нажатие кнопок «Иду» / «Не иду»; ответы-подсказки — на языке нажавшего
   bot.callbackQuery(/^rsvp:(\d+):(going|not_going)$/, async (ctx) => {
     const match = ctx.match as RegExpMatchArray;
     const trainingId = match[1];
     const status = match[2];
     const user = await ensureUser(ctx);
 
-    const [t] = await sql`select team_id, starts_at from trainings where id = ${trainingId}`;
-    if (!t) return ctx.answerCallbackQuery({ text: "Тренировка не найдена." });
-    if (t.starts_at < new Date()) {
-      return ctx.answerCallbackQuery({ text: "Эта тренировка уже прошла." });
+    const [tr] = await sql`select team_id, starts_at from trainings where id = ${trainingId}`;
+    if (!tr) return ctx.answerCallbackQuery({ text: t(user.lang, "cb_not_found") });
+    if (tr.starts_at < new Date()) {
+      return ctx.answerCallbackQuery({ text: t(user.lang, "cb_past") });
     }
 
     const [member] = await sql`
-      select 1 as ok from memberships where team_id = ${t.team_id} and user_id = ${user.id}`;
+      select 1 as ok from memberships where team_id = ${tr.team_id} and user_id = ${user.id}`;
     if (!member) {
-      return ctx.answerCallbackQuery({
-        text: "Сначала вступите в команду: откройте бота в личных сообщениях и отправьте /join КОД",
-        show_alert: true,
-      });
+      return ctx.answerCallbackQuery({ text: t(user.lang, "cb_not_member"), show_alert: true });
     }
 
     const [current] = await sql`
       select status from rsvps where training_id = ${trainingId} and user_id = ${user.id}`;
     if (current && current.status === status) {
-      return ctx.answerCallbackQuery({ text: "Ваш ответ уже записан." });
+      return ctx.answerCallbackQuery({ text: t(user.lang, "cb_already") });
     }
 
     await sql.begin(async (tx) => {
@@ -165,7 +156,7 @@ export function registerTrainings(bot: Bot) {
       console.error("editMessageText:", e);
     }
     await ctx.answerCallbackQuery({
-      text: status === "going" ? "Ответ записан: иду ✅" : "Ответ записан: не иду ❌",
+      text: t(user.lang, status === "going" ? "cb_saved_going" : "cb_saved_not_going"),
     });
   });
 }
