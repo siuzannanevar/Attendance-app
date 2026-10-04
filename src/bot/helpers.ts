@@ -15,3 +15,13 @@ export async function ensureUser(ctx: Context) {
   const lang: Lang = isLang(user.language) ? user.language : pickLang(from.language_code);
   return { id: user.id as string, lang };
 }
+
+// Удаляет сообщение-команду в группе, чтобы не засорять чат.
+// Работает, если бот администратор с правом удалять сообщения; иначе молча ничего не делает.
+export async function tryDelete(ctx: Context) {
+  try {
+    await ctx.deleteMessage();
+  } catch {
+    /* нет прав — не страшно */
+  }
+}

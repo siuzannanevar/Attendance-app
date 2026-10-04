@@ -21,15 +21,20 @@ export function pickLang(code?: string | null): Lang {
 
 const ru = {
   help:
-    "Привет! Я помогаю командам собирать ответы на тренировки.\n\n" +
+    "Привет! Я помогаю командам собирать ответы на тренировки.\n" +
+    "\n" +
     "В личном чате со мной:\n" +
     "/newteam Название — создать команду\n" +
     "/join КОД — вступить в команду по коду\n" +
+    "/newschedule ДНИ ЧЧ:ММ МИН Место — регулярные тренировки (опросы и напоминания приходят сами)\n" +
+    "/schedule — расписание\n" +
+    "/timing ОПРОС НАПОМИНАНИЕ — за сколько часов публиковать (по умолчанию 48 и 24)\n" +
+    "/newtraining ДД.ММ ЧЧ:ММ МИН Место — разовая тренировка\n" +
     "/myteams — мои команды\n" +
-    "/language — выбрать язык\n\n" +
-    "В группе команды (для организатора):\n" +
+    "/language — выбрать язык\n" +
+    "\n" +
+    "В группе команды (один раз, для организатора):\n" +
     "/linkgroup — привязать группу к команде\n" +
-    "/newtraining ДД.ММ ЧЧ:ММ МИН Место — создать тренировку\n" +
     "/language — язык сообщений группы",
 
   newteam_private: "Команду лучше создавать в личном чате со мной.",
@@ -55,13 +60,20 @@ const ru = {
   linkgroup_ok:
     "Группа привязана к команде «{name}». Теперь организатор может создавать тренировки: /newtraining",
 
-  newtraining_private: "Эту команду нужно писать в группе команды (после /linkgroup).",
   newtraining_notlinked:
     "Эта группа не привязана к команде, или вы не организатор этой команды. Привязка: /linkgroup",
   newtraining_format:
     "Формат: /newtraining ДД.ММ ЧЧ:ММ МИН_ИГРОКОВ Место\nПример: /newtraining 15.10 19:00 12 Спортзал колледжа",
   newtraining_baddate: "Похоже, дата или время указаны неверно. Пример: 15.10 19:00",
   newtraining_nodate: "Не получилось определить дату. Пример: 15.10 19:00",
+  newtraining_no_admin_team: "Вы не организатор ни одной команды. Создайте команду: /newteam",
+  newtraining_group_missing:
+    "Группа команды «{team}» ещё не привязана. Добавьте бота в группу команды и отправьте там /linkgroup",
+  newtraining_choose_team: "Для какой команды создать тренировку?",
+  newtraining_expired: "Черновик тренировки устарел. Отправьте /newtraining ещё раз.",
+  training_published: "Готово: опрос о тренировке отправлен в группу команды «{team}».",
+  newtraining_post_failed:
+    "Не получилось отправить опрос в группу. Проверьте, что бот добавлен в группу и может писать сообщения.",
 
   poll_title: "📅 {team}: тренировка",
   poll_going: "✅ Идут ({count}):",
@@ -78,6 +90,43 @@ const ru = {
   cb_saved_going: "Ответ записан: иду ✅",
   cb_saved_not_going: "Ответ записан: не иду ❌",
 
+  private_only: "Эту команду нужно писать мне в личные сообщения.",
+  not_organizer: "Это действие доступно только организатору команды.",
+  choose_team: "Для какой команды?",
+
+  schedule_usage:
+    "Формат: /newschedule ДНИ ЧЧ:ММ МИН Место\nПример: /newschedule ср,пт 19:00 12 Спортзал колледжа\nДни: пн, вт, ср, чт, пт, сб, вс (или цифры 1–7)",
+  schedule_bad_day:
+    "Не понимаю день недели «{day}». Используйте: пн, вт, ср, чт, пт, сб, вс или цифры 1–7.",
+  schedule_bad_time: "Время указано неверно. Пример: 19:00",
+  schedule_added:
+    "✅ Расписание добавлено: {slots}.\nОпрос приходит в группу за {poll} ч до тренировки, напоминание — за {remind} ч.\nПосмотреть и изменить: /schedule",
+  schedule_no_group:
+    "⚠️ Группа команды ещё не привязана, поэтому опросы пока не будут публиковаться. Добавьте бота в группу и отправьте там /linkgroup.",
+  schedule_timing_line: "Опрос: за {poll} ч до тренировки · напоминание: за {remind} ч",
+  schedule_empty: "Расписания пока нет. Добавьте: /newschedule",
+  slot_deleted: "Удалено",
+
+  timing_usage:
+    "Формат: /timing ОПРОС НАПОМИНАНИЕ (в часах до тренировки)\nПример: /timing 48 24 — опрос за 48 ч, напоминание за 24 ч",
+  timing_bad:
+    "Числа должны быть от 1 до 336, и опрос должен идти раньше напоминания (первое число не меньше второго).",
+  timing_saved: "Сохранено для «{team}»: опрос за {poll} ч, напоминание за {remind} ч до тренировки.",
+
+  reminder_group:
+    "⏰ Скоро тренировка: {when}.\nПока идут: {count}.\nЕщё не ответили: {names}\nПожалуйста, нажмите кнопку в опросе.",
+  alert_shortage:
+    "⚠️ {team}: на тренировку {when} пока идут {going} из {needed}. Не хватает: {missing}.",
+  btn_call: "🆘 Позвать ещё в группе",
+  btn_invite_text: "📋 Текст для приглашения",
+  call_group:
+    "🆘 Нужно ещё игроков: {missing}! Тренировка {when}. Нажмите «Иду» в опросе выше или позовите друга.",
+  call_sent: "Отправлено в группу.",
+  call_enough: "Игроков уже достаточно.",
+  invite_text:
+    "{team}: ищем игроков на тренировку {when}{place}. Нужно ещё {missing}. Пишите: {contact}",
+  invite_text_hint: "Перешлите это сообщение в другие чаты:",
+
   lang_choose_user: "Language / Keel / Язык:",
   lang_choose_group: "Group language / Grupi keel / Язык группы:",
   lang_saved_user: "Язык: {language}.",
@@ -88,15 +137,20 @@ const ru = {
 
 const en: typeof ru = {
   help:
-    "Hi! I help teams collect attendance for trainings.\n\n" +
+    "Hi! I help teams collect attendance for trainings.\n" +
+    "\n" +
     "In a private chat with me:\n" +
     "/newteam Name — create a team\n" +
     "/join CODE — join a team with an invite code\n" +
+    "/newschedule DAYS HH:MM MIN Place — recurring trainings (polls and reminders are sent automatically)\n" +
+    "/schedule — the schedule\n" +
+    "/timing POLL REMINDER — how many hours before to post (default 48 and 24)\n" +
+    "/newtraining DD.MM HH:MM MIN Place — a one-off training\n" +
     "/myteams — my teams\n" +
-    "/language — choose language\n\n" +
-    "In the team's group (for organizers):\n" +
+    "/language — choose language\n" +
+    "\n" +
+    "In the team's group (once, for organizers):\n" +
     "/linkgroup — link this group to your team\n" +
-    "/newtraining DD.MM HH:MM MIN Place — create a training\n" +
     "/language — language of the group's messages",
 
   newteam_private: "Please create a team in a private chat with me.",
@@ -122,13 +176,20 @@ const en: typeof ru = {
   linkgroup_ok:
     "The group is linked to team “{name}”. Organizers can now create trainings: /newtraining",
 
-  newtraining_private: "Use this command in the team's group (after /linkgroup).",
   newtraining_notlinked:
     "This group is not linked to a team, or you are not an organizer of that team. Link it with /linkgroup",
   newtraining_format:
     "Format: /newtraining DD.MM HH:MM MIN_PLAYERS Place\nExample: /newtraining 15.10 19:00 12 College gym",
   newtraining_baddate: "The date or time looks invalid. Example: 15.10 19:00",
   newtraining_nodate: "Could not work out the date. Example: 15.10 19:00",
+  newtraining_no_admin_team: "You are not an organizer of any team. Create one: /newteam",
+  newtraining_group_missing:
+    "The group of team “{team}” is not linked yet. Add the bot to the team's group and send /linkgroup there.",
+  newtraining_choose_team: "Which team is the training for?",
+  newtraining_expired: "The training draft has expired. Please send /newtraining again.",
+  training_published: "Done: the training poll has been sent to the group of “{team}”.",
+  newtraining_post_failed:
+    "Could not send the poll to the group. Make sure the bot is in the group and can post messages.",
 
   poll_title: "📅 {team}: training",
   poll_going: "✅ Going ({count}):",
@@ -145,6 +206,43 @@ const en: typeof ru = {
   cb_saved_going: "Saved: you're going ✅",
   cb_saved_not_going: "Saved: you're not going ❌",
 
+  private_only: "Please send this command to me in a private chat.",
+  not_organizer: "Only a team organizer can do this.",
+  choose_team: "Which team?",
+
+  schedule_usage:
+    "Format: /newschedule DAYS HH:MM MIN Place\nExample: /newschedule wed,fri 19:00 12 College gym\nDays: mon, tue, wed, thu, fri, sat, sun (or numbers 1–7)",
+  schedule_bad_day:
+    "I don't understand the weekday “{day}”. Use: mon, tue, wed, thu, fri, sat, sun or numbers 1–7.",
+  schedule_bad_time: "The time looks invalid. Example: 19:00",
+  schedule_added:
+    "✅ Schedule added: {slots}.\nThe poll is posted to the group {poll} h before training, the reminder {remind} h before.\nView and edit: /schedule",
+  schedule_no_group:
+    "⚠️ The team's group is not linked yet, so polls will not be posted. Add the bot to the group and send /linkgroup there.",
+  schedule_timing_line: "Poll: {poll} h before training · reminder: {remind} h before",
+  schedule_empty: "No schedule yet. Add one: /newschedule",
+  slot_deleted: "Deleted",
+
+  timing_usage:
+    "Format: /timing POLL REMINDER (hours before training)\nExample: /timing 48 24 — poll 48 h before, reminder 24 h before",
+  timing_bad:
+    "Numbers must be between 1 and 336, and the poll must come before the reminder (first number not smaller than the second).",
+  timing_saved: "Saved for “{team}”: poll {poll} h before, reminder {remind} h before.",
+
+  reminder_group:
+    "⏰ Training soon: {when}.\nGoing so far: {count}.\nNo answer yet: {names}\nPlease press a button in the poll.",
+  alert_shortage:
+    "⚠️ {team}: for the training on {when}, {going} of {needed} are going. Missing: {missing}.",
+  btn_call: "🆘 Call for players in the group",
+  btn_invite_text: "📋 Invitation text",
+  call_group:
+    "🆘 We need {missing} more players! Training {when}. Press “I'm in” in the poll above or bring a friend.",
+  call_sent: "Sent to the group.",
+  call_enough: "There are already enough players.",
+  invite_text:
+    "{team}: looking for players for training {when}{place}. {missing} more needed. Contact: {contact}",
+  invite_text_hint: "Forward this message to other chats:",
+
   lang_choose_user: "Language / Keel / Язык:",
   lang_choose_group: "Group language / Grupi keel / Язык группы:",
   lang_saved_user: "Language: {language}.",
@@ -155,15 +253,20 @@ const en: typeof ru = {
 
 const et: typeof ru = {
   help:
-    "Tere! Aitan meeskondadel treeningutel osalemist kokku koguda.\n\n" +
+    "Tere! Aitan meeskondadel treeningutel osalemist kokku koguda.\n" +
+    "\n" +
     "Privaatvestluses minuga:\n" +
     "/newteam Nimi — loo meeskond\n" +
     "/join KOOD — liitu meeskonnaga kutsekoodiga\n" +
+    "/newschedule PÄEVAD HH:MM MIN Koht — regulaarsed treeningud (küsitlused ja meeldetuletused tulevad ise)\n" +
+    "/schedule — ajakava\n" +
+    "/timing KÜSITLUS MEELDETULETUS — mitu tundi enne postitada (vaikimisi 48 ja 24)\n" +
+    "/newtraining PP.KK HH:MM MIN Koht — ühekordne treening\n" +
     "/myteams — minu meeskonnad\n" +
-    "/language — vali keel\n\n" +
-    "Meeskonna grupis (korraldajale):\n" +
+    "/language — vali keel\n" +
+    "\n" +
+    "Meeskonna grupis (üks kord, korraldajale):\n" +
     "/linkgroup — seo see grupp oma meeskonnaga\n" +
-    "/newtraining PP.KK HH:MM MIN Koht — loo treening\n" +
     "/language — grupisõnumite keel",
 
   newteam_private: "Palun loo meeskond minuga privaatvestluses.",
@@ -189,13 +292,20 @@ const et: typeof ru = {
   linkgroup_ok:
     "Grupp on seotud meeskonnaga „{name}”. Nüüd saab korraldaja treeninguid luua: /newtraining",
 
-  newtraining_private: "Kasuta seda käsku meeskonna grupis (pärast /linkgroup).",
   newtraining_notlinked:
     "See grupp pole meeskonnaga seotud või sa pole selle meeskonna korraldaja. Seo grupp käsuga /linkgroup",
   newtraining_format:
     "Vorming: /newtraining PP.KK HH:MM MIN_MÄNGIJAID Koht\nNäide: /newtraining 15.10 19:00 12 Kolledži spordisaal",
   newtraining_baddate: "Kuupäev või kellaaeg tundub vale. Näide: 15.10 19:00",
   newtraining_nodate: "Kuupäeva ei õnnestunud tuvastada. Näide: 15.10 19:00",
+  newtraining_no_admin_team: "Sa ei ole ühegi meeskonna korraldaja. Loo meeskond: /newteam",
+  newtraining_group_missing:
+    "Meeskonna „{team}” grupp pole veel seotud. Lisa bot meeskonna gruppi ja saada seal /linkgroup.",
+  newtraining_choose_team: "Millise meeskonna treening see on?",
+  newtraining_expired: "Treeningu mustand aegus. Saada /newtraining uuesti.",
+  training_published: "Valmis: treeningu küsitlus saadeti meeskonna „{team}” gruppi.",
+  newtraining_post_failed:
+    "Küsitlust ei õnnestunud gruppi saata. Veendu, et bot on grupis ja saab sõnumeid saata.",
 
   poll_title: "📅 {team}: treening",
   poll_going: "✅ Tulevad ({count}):",
@@ -211,6 +321,43 @@ const et: typeof ru = {
   cb_already: "Sinu vastus on juba salvestatud.",
   cb_saved_going: "Salvestatud: tuled ✅",
   cb_saved_not_going: "Salvestatud: sa ei tule ❌",
+
+  private_only: "Palun saada see käsk mulle privaatsõnumina.",
+  not_organizer: "See on kättesaadav ainult meeskonna korraldajale.",
+  choose_team: "Millise meeskonna jaoks?",
+
+  schedule_usage:
+    "Vorming: /newschedule PÄEVAD HH:MM MIN Koht\nNäide: /newschedule k,r 19:00 12 Kolledži spordisaal\nPäevad: e, t, k, n, r, l, p (või numbrid 1–7)",
+  schedule_bad_day:
+    "Ma ei saa nädalapäevast „{day}” aru. Kasuta: e, t, k, n, r, l, p või numbreid 1–7.",
+  schedule_bad_time: "Kellaaeg tundub vale. Näide: 19:00",
+  schedule_added:
+    "✅ Ajakava lisatud: {slots}.\nKüsitlus postitatakse gruppi {poll} h enne treeningut, meeldetuletus {remind} h enne.\nVaata ja muuda: /schedule",
+  schedule_no_group:
+    "⚠️ Meeskonna gruppi pole veel seotud, seetõttu küsitlusi ei postitata. Lisa bot gruppi ja saada seal /linkgroup.",
+  schedule_timing_line: "Küsitlus: {poll} h enne treeningut · meeldetuletus: {remind} h enne",
+  schedule_empty: "Ajakava pole veel. Lisa: /newschedule",
+  slot_deleted: "Kustutatud",
+
+  timing_usage:
+    "Vorming: /timing KÜSITLUS MEELDETULETUS (tunnid enne treeningut)\nNäide: /timing 48 24 — küsitlus 48 h enne, meeldetuletus 24 h enne",
+  timing_bad:
+    "Arvud peavad olema vahemikus 1–336 ja küsitlus peab tulema enne meeldetuletust (esimene arv ei tohi olla väiksem kui teine).",
+  timing_saved: "Salvestatud meeskonnale „{team}”: küsitlus {poll} h enne, meeldetuletus {remind} h enne.",
+
+  reminder_group:
+    "⏰ Peagi on treening: {when}.\nPraegu tulevad: {count}.\nPole vastanud: {names}\nPalun vajuta küsitluses nuppu.",
+  alert_shortage:
+    "⚠️ {team}: treeninguks {when} tuleb praegu {going}/{needed}. Puudu: {missing}.",
+  btn_call: "🆘 Kutsu gruppi lisamängijaid",
+  btn_invite_text: "📋 Kutsetekst",
+  call_group:
+    "🆘 Vaja on veel {missing} mängijat! Treening {when}. Vajuta ülal küsitluses „Tulen” või too sõber kaasa.",
+  call_sent: "Gruppi saadetud.",
+  call_enough: "Mängijaid on juba piisavalt.",
+  invite_text:
+    "{team}: otsime mängijaid treeninguks {when}{place}. Vaja on veel {missing}. Kontakt: {contact}",
+  invite_text_hint: "Edasta see sõnum teistesse vestlustesse:",
 
   lang_choose_user: "Language / Keel / Язык:",
   lang_choose_group: "Group language / Grupi keel / Язык группы:",
