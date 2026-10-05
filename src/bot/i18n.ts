@@ -30,6 +30,8 @@ const ru = {
     "/schedule — расписание\n" +
     "/timing ОПРОС НАПОМИНАНИЕ — за сколько часов публиковать (по умолчанию 48 и 24)\n" +
     "/newtraining ДД.ММ ЧЧ:ММ МИН Место — разовая тренировка\n" +
+    "/members — участники команды (удалить, не считать себя)\n" +
+    "/leave — выйти из команды\n" +
     "/myteams — мои команды\n" +
     "/language — выбрать язык\n" +
     "\n" +
@@ -127,6 +129,22 @@ const ru = {
     "{team}: ищем игроков на тренировку {when}{place}. Нужно ещё {missing}. Пишите: {contact}",
   invite_text_hint: "Перешлите это сообщение в другие чаты:",
 
+  members_not_playing: " · не играет",
+  btn_play_off: "🚫 Я не играю — не считать меня",
+  btn_play_on: "🏃 Я играю — считать меня",
+  play_saved_on: "Теперь вы учитываетесь в счётчике.",
+  play_saved_off: "Вас больше не считают среди неответивших.",
+  member_removed: "Удалено: {name}",
+  cannot_remove_self: "Себя удалить нельзя. Чтобы выйти из команды, используйте /leave",
+  you_were_removed: "Организатор удалил вас из команды «{team}».",
+  leave_choose: "Из какой команды выйти?",
+  leave_confirm: "Выйти из команды «{team}»? Ваши ответы на будущие тренировки будут удалены.",
+  btn_yes_leave: "Да, выйти",
+  btn_cancel: "Отмена",
+  leave_done: "Вы вышли из команды «{team}».",
+  leave_last_admin: "Вы единственный организатор этой команды, поэтому выйти нельзя.",
+  leave_cancelled: "Отменено.",
+
   lang_choose_user: "Language / Keel / Язык:",
   lang_choose_group: "Group language / Grupi keel / Язык группы:",
   lang_saved_user: "Язык: {language}.",
@@ -146,6 +164,8 @@ const en: typeof ru = {
     "/schedule — the schedule\n" +
     "/timing POLL REMINDER — how many hours before to post (default 48 and 24)\n" +
     "/newtraining DD.MM HH:MM MIN Place — a one-off training\n" +
+    "/members — team members (remove, mark yourself as not playing)\n" +
+    "/leave — leave a team\n" +
     "/myteams — my teams\n" +
     "/language — choose language\n" +
     "\n" +
@@ -243,6 +263,22 @@ const en: typeof ru = {
     "{team}: looking for players for training {when}{place}. {missing} more needed. Contact: {contact}",
   invite_text_hint: "Forward this message to other chats:",
 
+  members_not_playing: " · not playing",
+  btn_play_off: "🚫 I don't play — don't count me",
+  btn_play_on: "🏃 I play — count me",
+  play_saved_on: "You are now counted in the poll.",
+  play_saved_off: "You are no longer counted among those who haven't answered.",
+  member_removed: "Removed: {name}",
+  cannot_remove_self: "You can't remove yourself. To leave the team, use /leave",
+  you_were_removed: "An organizer removed you from team “{team}”.",
+  leave_choose: "Which team do you want to leave?",
+  leave_confirm: "Leave team “{team}”? Your answers for upcoming trainings will be removed.",
+  btn_yes_leave: "Yes, leave",
+  btn_cancel: "Cancel",
+  leave_done: "You left “{team}”.",
+  leave_last_admin: "You are the only organizer of this team, so you can't leave.",
+  leave_cancelled: "Cancelled.",
+
   lang_choose_user: "Language / Keel / Язык:",
   lang_choose_group: "Group language / Grupi keel / Язык группы:",
   lang_saved_user: "Language: {language}.",
@@ -262,6 +298,8 @@ const et: typeof ru = {
     "/schedule — ajakava\n" +
     "/timing KÜSITLUS MEELDETULETUS — mitu tundi enne postitada (vaikimisi 48 ja 24)\n" +
     "/newtraining PP.KK HH:MM MIN Koht — ühekordne treening\n" +
+    "/members — meeskonna liikmed (eemalda, ära arvesta ennast)\n" +
+    "/leave — lahku meeskonnast\n" +
     "/myteams — minu meeskonnad\n" +
     "/language — vali keel\n" +
     "\n" +
@@ -358,6 +396,22 @@ const et: typeof ru = {
   invite_text:
     "{team}: otsime mängijaid treeninguks {when}{place}. Vaja on veel {missing}. Kontakt: {contact}",
   invite_text_hint: "Edasta see sõnum teistesse vestlustesse:",
+
+  members_not_playing: " · ei mängi",
+  btn_play_off: "🚫 Ma ei mängi — ära arvesta mind",
+  btn_play_on: "🏃 Ma mängin — arvesta mind",
+  play_saved_on: "Sind arvestatakse nüüd küsitluses.",
+  play_saved_off: "Sind ei loeta enam vastamata jätnute hulka.",
+  member_removed: "Eemaldatud: {name}",
+  cannot_remove_self: "Iseennast ei saa eemaldada. Meeskonnast lahkumiseks kasuta /leave",
+  you_were_removed: "Korraldaja eemaldas sind meeskonnast „{team}”.",
+  leave_choose: "Millisest meeskonnast soovid lahkuda?",
+  leave_confirm: "Kas lahkuda meeskonnast „{team}”? Sinu vastused tulevastele treeningutele kustutatakse.",
+  btn_yes_leave: "Jah, lahku",
+  btn_cancel: "Tühista",
+  leave_done: "Lahkusid meeskonnast „{team}”.",
+  leave_last_admin: "Sa oled selle meeskonna ainus korraldaja, seega ei saa lahkuda.",
+  leave_cancelled: "Tühistatud.",
 
   lang_choose_user: "Language / Keel / Язык:",
   lang_choose_group: "Group language / Grupi keel / Язык группы:",

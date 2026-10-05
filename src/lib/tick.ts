@@ -91,7 +91,7 @@ export async function runTick(api: Api, onlyTeamId?: string | number) {
       const unanswered = await sql`
         select u.first_name, u.telegram_id
         from memberships m join users u on u.id = m.user_id
-        where m.team_id = ${row.team_id}
+        where m.team_id = ${row.team_id} and m.plays
           and not exists (
             select 1 from rsvps r where r.training_id = ${row.id} and r.user_id = m.user_id
           )

@@ -27,8 +27,13 @@ export async function render(trainingId: string | number) {
   const [{ not_going }] = await sql`
     select count(*)::int as not_going from rsvps
     where training_id = ${trainingId} and status = 'not_going'`;
-  const [{ members }] = await sql`
-    select count(*)::int as members from memberships where team_id = ${row.team_id}`;
+  const [{ no_answer }] = await sql`
+    select count(*)::int as no_answer
+    from memberships m
+    where m.team_id = ${row.team_id} and m.plays
+      and not exists (
+        select 1 from rsvps r where r.training_id = ${trainingId} and r.user_id = m.user_id
+      )`;
 
   const when = new Intl.DateTimeFormat(LOCALES[lang], {
     weekday: "short",
@@ -40,7 +45,6 @@ export async function render(trainingId: string | number) {
   }).format(row.starts_at);
 
   const count = row.needed_players ? `${going.length}/${row.needed_players}` : `${going.length}`;
-  const noAnswer = Math.max(0, members - going.length - not_going);
 
   const lines: (string | null)[] = [
     t(lang, "poll_title", { team: row.team_name }),
@@ -51,7 +55,7 @@ export async function render(trainingId: string | number) {
     ...going.map((g, i) => `${i + 1}. ${g.first_name}`),
     "",
     t(lang, "poll_not_going", { n: not_going }),
-    t(lang, "poll_no_answer", { n: noAnswer }),
+    t(lang, "poll_no_answer", { n: no_answer }),
   ];
 
   return {
