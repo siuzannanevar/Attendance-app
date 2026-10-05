@@ -145,6 +145,14 @@ const ru = {
   leave_last_admin: "Вы единственный организатор этой команды, поэтому выйти нельзя.",
   leave_cancelled: "Отменено.",
 
+  members_hint: "👑 — назначить организатором, ⬇️ — снять роль, 🗑 — удалить из команды.",
+  owner_only: "Менять роль и удалять организаторов может только создатель команды.",
+  promoted: "{name} теперь организатор.",
+  demoted: "{name} больше не организатор.",
+  you_are_organizer:
+    "Вас назначили организатором команды «{team}». Теперь вам доступны /newtraining, /newschedule, /members и другие команды организатора.",
+  you_not_organizer: "Вы больше не организатор команды «{team}».",
+
   lang_choose_user: "Language / Keel / Язык:",
   lang_choose_group: "Group language / Grupi keel / Язык группы:",
   lang_saved_user: "Язык: {language}.",
@@ -279,6 +287,14 @@ const en: typeof ru = {
   leave_last_admin: "You are the only organizer of this team, so you can't leave.",
   leave_cancelled: "Cancelled.",
 
+  members_hint: "👑 — make organizer, ⬇️ — remove organizer role, 🗑 — remove from team.",
+  owner_only: "Only the team's creator can change or remove organizers.",
+  promoted: "{name} is now an organizer.",
+  demoted: "{name} is no longer an organizer.",
+  you_are_organizer:
+    "You have been made an organizer of team “{team}”. You can now use /newtraining, /newschedule, /members and other organizer commands.",
+  you_not_organizer: "You are no longer an organizer of team “{team}”.",
+
   lang_choose_user: "Language / Keel / Язык:",
   lang_choose_group: "Group language / Grupi keel / Язык группы:",
   lang_saved_user: "Language: {language}.",
@@ -412,6 +428,14 @@ const et: typeof ru = {
   leave_done: "Lahkusid meeskonnast „{team}”.",
   leave_last_admin: "Sa oled selle meeskonna ainus korraldaja, seega ei saa lahkuda.",
   leave_cancelled: "Tühistatud.",
+
+  members_hint: "👑 — määra korraldajaks, ⬇️ — võta korraldaja roll, 🗑 — eemalda meeskonnast.",
+  owner_only: "Organisaatorite rolli muuta ja neid eemaldada saab ainult meeskonna looja.",
+  promoted: "{name} on nüüd korraldaja.",
+  demoted: "{name} ei ole enam korraldaja.",
+  you_are_organizer:
+    "Sind määrati meeskonna „{team}” korraldajaks. Nüüd saad kasutada käske /newtraining, /newschedule, /members ja teisi korraldaja käske.",
+  you_not_organizer: "Sa ei ole enam meeskonna „{team}” korraldaja.",
 
   lang_choose_user: "Language / Keel / Язык:",
   lang_choose_group: "Group language / Grupi keel / Язык группы:",

@@ -44,7 +44,8 @@ async function removeMember(teamId: string | number, userId: string | number) {
 
 // Список участников команды с кнопками (для организатора)
 async function renderMembers(teamId: string | number, viewerId: string, lang: Lang) {
-  const [tm] = await sql`select name from teams where id = ${teamId}`;
+  const [tm] = await sql`select name, created_by from teams where id = ${teamId}`;
+  const viewerIsOwner = String(tm.created_by) === String(viewerId);
   const rows = await sql`
     select u.id, u.first_name, u.username, m.role, m.plays
     from memberships m join users u on u.id = m.user_id
@@ -59,16 +60,20 @@ async function renderMembers(teamId: string | number, viewerId: string, lang: La
         (r.plays ? "" : t(lang, "members_not_playing"))
     );
   });
+  lines.push("", t(lang, "members_hint"));
 
   const kb = new InlineKeyboard();
   const me = rows.find((r) => String(r.id) === String(viewerId));
   if (me) kb.text(me.plays ? t(lang, "btn_play_off") : t(lang, "btn_play_on"), `mp:${teamId}`).row();
-  let col = 0;
+
   for (const r of rows) {
     if (String(r.id) === String(viewerId)) continue;
-    kb.text(`🗑 ${r.first_name}`, `mr:${teamId}:${r.id}`);
-    col++;
-    if (col % 2 === 0) kb.row();
+    const targetIsAdmin = r.role === "admin";
+    // роль и удаление других организаторов доступны только создателю команды
+    if (targetIsAdmin && !viewerIsOwner) continue;
+    kb.text(targetIsAdmin ? `⬇️ ${r.first_name}` : `👑 ${r.first_name}`, `ma:${teamId}:${r.id}`)
+      .text(`🗑 ${r.first_name}`, `mr:${teamId}:${r.id}`)
+      .row();
   }
   return { text: lines.join("\n"), keyboard: kb };
 }
@@ -128,12 +133,16 @@ export function registerMembers(bot: Bot) {
     }
 
     const [target] = await sql`
-      select u.first_name, u.telegram_id, u.language, tm.name as team_name, tm.language as team_language
+      select u.first_name, u.telegram_id, u.language, m.role as target_role,
+             tm.name as team_name, tm.language as team_language, tm.created_by
       from memberships m
       join users u on u.id = m.user_id
       join teams tm on tm.id = m.team_id
       where m.team_id = ${teamId} and m.user_id = ${targetId}`;
     if (!target) return ctx.answerCallbackQuery();
+    if (target.target_role === "admin" && String(target.created_by) !== String(user.id)) {
+      return ctx.answerCallbackQuery({ text: t(user.lang, "owner_only"), show_alert: true });
+    }
 
     await removeMember(teamId, targetId);
 
@@ -153,6 +162,59 @@ export function registerMembers(bot: Bot) {
     }
     await refreshPolls(ctx.api, teamId);
     return ctx.answerCallbackQuery({ text: t(user.lang, "member_removed", { name: target.first_name }) });
+  });
+
+  // Назначить организатором / снять роль организатора
+  bot.callbackQuery(/^ma:(\d+):(\d+)$/, async (ctx) => {
+    const match = ctx.match as RegExpMatchArray;
+    const teamId = match[1];
+    const targetId = match[2];
+    const user = await ensureUser(ctx);
+
+    if (!(await isAdmin(teamId, user.id))) {
+      return ctx.answerCallbackQuery({ text: t(user.lang, "not_organizer"), show_alert: true });
+    }
+    if (String(targetId) === String(user.id)) return ctx.answerCallbackQuery();
+
+    const [target] = await sql`
+      select u.first_name, u.telegram_id, u.language, m.role,
+             tm.name as team_name, tm.language as team_language, tm.created_by
+      from memberships m
+      join users u on u.id = m.user_id
+      join teams tm on tm.id = m.team_id
+      where m.team_id = ${teamId} and m.user_id = ${targetId}`;
+    if (!target) return ctx.answerCallbackQuery();
+
+    const makeAdmin = target.role !== "admin";
+    // снять роль организатора может только создатель команды
+    if (!makeAdmin && String(target.created_by) !== String(user.id)) {
+      return ctx.answerCallbackQuery({ text: t(user.lang, "owner_only"), show_alert: true });
+    }
+
+    await sql`
+      update memberships set role = ${makeAdmin ? "admin" : "player"}
+      where team_id = ${teamId} and user_id = ${targetId}`;
+
+    // Сообщаем человеку о новой роли (если он начинал диалог с ботом)
+    const targetLang: Lang = isLang(target.language) ? target.language : (target.team_language as Lang);
+    try {
+      await ctx.api.sendMessage(
+        target.telegram_id,
+        t(targetLang, makeAdmin ? "you_are_organizer" : "you_not_organizer", { team: target.team_name })
+      );
+    } catch {
+      /* человек не начинал диалог с ботом — не страшно */
+    }
+
+    const { text, keyboard } = await renderMembers(teamId, user.id, user.lang);
+    try {
+      await ctx.editMessageText(text, { reply_markup: keyboard });
+    } catch (e) {
+      console.error("editMessageText:", e);
+    }
+    return ctx.answerCallbackQuery({
+      text: t(user.lang, makeAdmin ? "promoted" : "demoted", { name: target.first_name }),
+    });
   });
 
   // ----- /leave: выйти из команды
