@@ -30,6 +30,7 @@ const ru = {
     "/schedule — расписание\n" +
     "/timing ОПРОС НАПОМИНАНИЕ — за сколько часов публиковать (по умолчанию 48 и 24)\n" +
     "/newtraining ДД.ММ ЧЧ:ММ МИН Место — разовая тренировка\n" +
+    "/login — ссылка для входа на сайт\n" +
     "/members — участники команды (удалить, не считать себя)\n" +
     "/leave — выйти из команды\n" +
     "/myteams — мои команды\n" +
@@ -153,6 +154,10 @@ const ru = {
     "Вас назначили организатором команды «{team}». Теперь вам доступны /newtraining, /newschedule, /members и другие команды организатора.",
   you_not_organizer: "Вы больше не организатор команды «{team}».",
 
+  login_link_text:
+    "Нажмите кнопку, чтобы войти на сайт. Ссылка работает один раз и действует 10 минут.",
+  btn_open_site: "🔐 Открыть сайт",
+
   lang_choose_user: "Language / Keel / Язык:",
   lang_choose_group: "Group language / Grupi keel / Язык группы:",
   lang_saved_user: "Язык: {language}.",
@@ -172,6 +177,7 @@ const en: typeof ru = {
     "/schedule — the schedule\n" +
     "/timing POLL REMINDER — how many hours before to post (default 48 and 24)\n" +
     "/newtraining DD.MM HH:MM MIN Place — a one-off training\n" +
+    "/login — sign-in link for the website\n" +
     "/members — team members (remove, mark yourself as not playing)\n" +
     "/leave — leave a team\n" +
     "/myteams — my teams\n" +
@@ -295,6 +301,10 @@ const en: typeof ru = {
     "You have been made an organizer of team “{team}”. You can now use /newtraining, /newschedule, /members and other organizer commands.",
   you_not_organizer: "You are no longer an organizer of team “{team}”.",
 
+  login_link_text:
+    "Press the button to sign in to the website. The link works once and expires in 10 minutes.",
+  btn_open_site: "🔐 Open the website",
+
   lang_choose_user: "Language / Keel / Язык:",
   lang_choose_group: "Group language / Grupi keel / Язык группы:",
   lang_saved_user: "Language: {language}.",
@@ -314,6 +324,7 @@ const et: typeof ru = {
     "/schedule — ajakava\n" +
     "/timing KÜSITLUS MEELDETULETUS — mitu tundi enne postitada (vaikimisi 48 ja 24)\n" +
     "/newtraining PP.KK HH:MM MIN Koht — ühekordne treening\n" +
+    "/login — sisselogimise link veebisaidile\n" +
     "/members — meeskonna liikmed (eemalda, ära arvesta ennast)\n" +
     "/leave — lahku meeskonnast\n" +
     "/myteams — minu meeskonnad\n" +
@@ -436,6 +447,10 @@ const et: typeof ru = {
   you_are_organizer:
     "Sind määrati meeskonna „{team}” korraldajaks. Nüüd saad kasutada käske /newtraining, /newschedule, /members ja teisi korraldaja käske.",
   you_not_organizer: "Sa ei ole enam meeskonna „{team}” korraldaja.",
+
+  login_link_text:
+    "Vajuta nuppu, et veebisaidile sisse logida. Link toimib ühe korra ja kehtib 10 minutit.",
+  btn_open_site: "🔐 Ava sait",
 
   lang_choose_user: "Language / Keel / Язык:",
   lang_choose_group: "Group language / Grupi keel / Язык группы:",

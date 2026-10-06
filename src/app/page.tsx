@@ -1,6 +1,5 @@
 import { redirect } from "next/navigation";
 import Header from "@/components/Header";
-import TelegramLogin from "@/components/TelegramLogin";
 import { getCurrentUser, getLang } from "@/lib/session";
 import { wt } from "@/lib/web-i18n";
 
@@ -23,9 +22,13 @@ export default async function Home({
         <h1 className="text-2xl font-bold">{wt(lang, "login_title")}</h1>
         <p className="text-gray-500">{wt(lang, "login_hint")}</p>
         {error && <p className="text-red-600">{wt(lang, "login_failed")}</p>}
-        <div className="flex justify-center">
-          <TelegramLogin botUsername="attendance_team2026_bot" />
-        </div>
+        <a
+          href="https://t.me/attendance_team2026_bot?start=login"
+          className="inline-block rounded-full bg-sky-500 px-6 py-3 font-medium text-white hover:bg-sky-600"
+        >
+          {wt(lang, "login_bot_button")}
+        </a>
+        <p className="text-sm text-gray-500">{wt(lang, "login_bot_hint")}</p>
       </main>
     </>
   );
