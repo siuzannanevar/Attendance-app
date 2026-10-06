@@ -24,7 +24,7 @@ export default async function Home({
         <p className="text-gray-500">{wt(lang, "login_hint")}</p>
         {error && <p className="text-red-600">{wt(lang, "login_failed")}</p>}
         <div className="flex justify-center">
-          <TelegramLogin botUsername={process.env.NEXT_PUBLIC_BOT_USERNAME!} />
+          <TelegramLogin botUsername="attendance_team2026_bot" />
         </div>
       </main>
     </>
