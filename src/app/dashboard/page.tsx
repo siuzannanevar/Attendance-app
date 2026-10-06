@@ -21,28 +21,29 @@ export default async function Dashboard() {
   return (
     <>
       <Header lang={lang} next="/dashboard" userName={user.first_name} />
-      <main className="mx-auto max-w-2xl space-y-4 p-6">
-        <h1 className="text-2xl font-bold">{wt(lang, "my_teams")}</h1>
+      <main className="container">
+        <h1 className="page-title">{wt(lang, "my_teams")}</h1>
         {teams.length === 0 ? (
-          <p className="text-gray-500">{wt(lang, "no_teams")}</p>
+          <div className="card empty">{wt(lang, "no_teams")}</div>
         ) : (
-          <ul className="space-y-2">
+          <div className="list">
             {teams.map((tm) => (
-              <li key={tm.id}>
-                <Link
-                  href={`/teams/${tm.id}`}
-                  className="flex items-center justify-between rounded-lg border border-gray-300 p-4 hover:bg-gray-100 hover:text-black"
-                >
-                  <span className="font-medium">{tm.name}</span>
-                  <span className="text-sm text-gray-500">
+              <Link key={tm.id} href={`/teams/${tm.id}`} className="card card-link">
+                <div className="avatar">{String(tm.name).charAt(0).toUpperCase()}</div>
+                <div className="team-info">
+                  <div className="team-name">{tm.name}</div>
+                  <span className={tm.role === "admin" ? "badge badge-admin" : "badge"}>
                     {tm.role === "admin" ? wt(lang, "role_admin") : wt(lang, "role_player")}
                   </span>
-                </Link>
-              </li>
+                </div>
+                <span className="chev">›</span>
+              </Link>
             ))}
-          </ul>
+          </div>
         )}
-        <p className="text-sm text-gray-500">{wt(lang, "bot_hint")}</p>
+        <p className="muted small" style={{ marginTop: 20 }}>
+          {wt(lang, "bot_hint")}
+        </p>
       </main>
     </>
   );

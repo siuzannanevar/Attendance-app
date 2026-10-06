@@ -18,17 +18,20 @@ export default async function Home({
   return (
     <>
       <Header lang={lang} next="/" />
-      <main className="mx-auto max-w-md space-y-4 p-6 text-center">
-        <h1 className="text-2xl font-bold">{wt(lang, "login_title")}</h1>
-        <p className="text-gray-500">{wt(lang, "login_hint")}</p>
-        {error && <p className="text-red-600">{wt(lang, "login_failed")}</p>}
-        <a
-          href="https://t.me/attendance_team2026_bot?start=login"
-          className="inline-block rounded-full bg-sky-500 px-6 py-3 font-medium text-white hover:bg-sky-600"
-        >
-          {wt(lang, "login_bot_button")}
-        </a>
-        <p className="text-sm text-gray-500">{wt(lang, "login_bot_hint")}</p>
+      <main className="auth">
+        <div className="auth-card">
+          <div className="auth-icon">📋</div>
+          <h1>{wt(lang, "login_title")}</h1>
+          <p className="muted">{wt(lang, "login_hint")}</p>
+          {error && <p className="alert">{wt(lang, "login_failed")}</p>}
+          <a
+            href="https://t.me/attendance_team2026_bot?start=login"
+            className="btn btn-primary btn-lg"
+          >
+            ✈️ {wt(lang, "login_bot_button")}
+          </a>
+          <p className="muted small">{wt(lang, "login_bot_hint")}</p>
+        </div>
       </main>
     </>
   );

@@ -4,9 +4,23 @@ import Header from "@/components/Header";
 import { sql } from "@/lib/db";
 import { getCurrentUser, getLang } from "@/lib/session";
 import { wt } from "@/lib/web-i18n";
-import { formatWhen, weekdayShort } from "@/bot/format";
+import { weekdayShort } from "@/bot/format";
+import { LOCALES, type Lang } from "@/bot/i18n";
 
 export const dynamic = "force-dynamic";
+
+// Части даты для «карточки-календаря»: день недели, число, месяц, время
+function dateParts(date: Date, tz: string, lang: Lang) {
+  const loc = LOCALES[lang];
+  const f = (o: Intl.DateTimeFormatOptions) =>
+    new Intl.DateTimeFormat(loc, { ...o, timeZone: tz }).format(date);
+  return {
+    weekday: f({ weekday: "short" }),
+    day: f({ day: "numeric" }),
+    month: f({ month: "short" }),
+    time: f({ hour: "2-digit", minute: "2-digit", hour12: false }),
+  };
+}
 
 export default async function TeamPage(props: { params: Promise<{ id: string }> }) {
   const { id } = await props.params;
@@ -65,90 +79,133 @@ export default async function TeamPage(props: { params: Promise<{ id: string }> 
 
   const answerLabel = (s: string | null) =>
     s === "going" ? wt(lang, "ans_going") : s === "not_going" ? wt(lang, "ans_not_going") : wt(lang, "ans_none");
+  const answerClass = (s: string | null) =>
+    s === "going" ? "badge badge-green" : s === "not_going" ? "badge badge-red" : "badge";
 
   return (
     <>
       <Header lang={lang} next={`/teams/${id}`} userName={user.first_name} />
-      <main className="mx-auto max-w-2xl space-y-6 p-6">
-        <Link href="/dashboard" className="text-sm text-gray-500 underline">
+      <main className="container">
+        <Link href="/dashboard" className="back">
           {wt(lang, "back")}
         </Link>
-        <div className="flex items-baseline justify-between">
-          <h1 className="text-2xl font-bold">{team.name}</h1>
-          <span className="text-sm text-gray-500">
+
+        <div className="team-head">
+          <h1 className="page-title" style={{ marginBottom: 0 }}>
+            {team.name}
+          </h1>
+          <span className={isAdmin ? "badge badge-admin" : "badge"}>
             {isAdmin ? wt(lang, "role_admin") : wt(lang, "role_player")}
           </span>
         </div>
 
-        <section className="space-y-2">
-          <h2 className="text-lg font-semibold">{wt(lang, "upcoming")}</h2>
+        <section className="section">
+          <h2 className="section-title">{wt(lang, "upcoming")}</h2>
           {trainings.length === 0 ? (
-            <p className="text-gray-500">{wt(lang, "no_upcoming")}</p>
+            <div className="card empty">{wt(lang, "no_upcoming")}</div>
           ) : (
-            trainings.map((tr) => (
-              <div key={tr.id} className="space-y-1 rounded-lg border border-gray-300 p-4">
-                <div className="font-medium">
-                  {formatWhen(tr.starts_at, team.timezone, lang)}
-                  {tr.place ? ` · ${tr.place}` : ""}
-                </div>
-                <div className="text-sm">
-                  {wt(lang, "going")}: {tr.going}
-                  {tr.needed_players ? `/${tr.needed_players}` : ""} · {wt(lang, "not_going")}:{" "}
-                  {tr.not_going} · {wt(lang, "no_answer")}: {tr.no_answer}
-                </div>
-                {goingNames[tr.id] && (
-                  <div className="text-sm text-gray-500">{goingNames[tr.id].join(", ")}</div>
-                )}
-                <div className="text-sm">
-                  {wt(lang, "your_answer")}: <b>{answerLabel(tr.my_status)}</b>
-                </div>
-              </div>
-            ))
+            <div className="list">
+              {trainings.map((tr) => {
+                const p = dateParts(tr.starts_at, team.timezone, lang);
+                const pct = tr.needed_players
+                  ? Math.min(100, Math.round((tr.going / tr.needed_players) * 100))
+                  : 0;
+                return (
+                  <article key={tr.id} className="card training">
+                    <div className="training-date">
+                      <div className="td-weekday">{p.weekday}</div>
+                      <div className="td-day">{p.day}</div>
+                      <div className="td-month">{p.month}</div>
+                    </div>
+                    <div className="training-body">
+                      <div className="training-head">
+                        <span className="training-time">{p.time}</span>
+                        {tr.place && <span className="muted">📍 {tr.place}</span>}
+                      </div>
+                      {tr.needed_players ? (
+                        <div className="progress">
+                          <div className="progress-bar" style={{ width: `${pct}%` }} />
+                        </div>
+                      ) : null}
+                      <div className="chips">
+                        <span className="chip chip-green">
+                          ✅ {wt(lang, "going")}: {tr.going}
+                          {tr.needed_players ? `/${tr.needed_players}` : ""}
+                        </span>
+                        <span className="chip chip-red">
+                          ❌ {wt(lang, "not_going")}: {tr.not_going}
+                        </span>
+                        <span className="chip">
+                          ⏳ {wt(lang, "no_answer")}: {tr.no_answer}
+                        </span>
+                      </div>
+                      {goingNames[tr.id] && (
+                        <div className="names">
+                          {goingNames[tr.id].map((n, i) => (
+                            <span key={i} className="name-tag">
+                              {n}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                      <div className="your">
+                        {wt(lang, "your_answer")}:
+                        <span className={answerClass(tr.my_status)}>{answerLabel(tr.my_status)}</span>
+                      </div>
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
           )}
         </section>
 
-        <section className="space-y-2">
-          <h2 className="text-lg font-semibold">{wt(lang, "schedule")}</h2>
+        <section className="section">
+          <h2 className="section-title">{wt(lang, "schedule")}</h2>
           {slots.length === 0 ? (
-            <p className="text-gray-500">{wt(lang, "no_schedule")}</p>
+            <div className="card empty">{wt(lang, "no_schedule")}</div>
           ) : (
-            <>
-              <ul className="space-y-1">
-                {slots.map((s, i) => (
-                  <li key={i}>
-                    {weekdayShort(lang, s.weekday)} {String(s.start_time).slice(0, 5)}
-                    {s.needed_players ? ` · ${s.needed_players}` : ""}
-                    {s.place ? ` · ${s.place}` : ""}
-                  </li>
-                ))}
-              </ul>
-              <p className="text-sm text-gray-500">
+            <div className="card rows">
+              {slots.map((s, i) => (
+                <div key={i} className="row">
+                  <span className="pill">{weekdayShort(lang, s.weekday)}</span>
+                  <span className="slot-time">{String(s.start_time).slice(0, 5)}</span>
+                  {s.needed_players ? <span className="muted">👥 {s.needed_players}</span> : null}
+                  {s.place ? <span className="muted">📍 {s.place}</span> : null}
+                </div>
+              ))}
+              <p className="muted small">
                 {wt(lang, "schedule_timing", {
                   poll: team.poll_hours_before,
                   remind: team.remind_hours_before,
                 })}
               </p>
-            </>
+            </div>
           )}
         </section>
 
         {isAdmin && (
-          <section className="space-y-2">
-            <h2 className="text-lg font-semibold">{wt(lang, "members")}</h2>
-            <ul className="space-y-1">
+          <section className="section">
+            <h2 className="section-title">{wt(lang, "members")}</h2>
+            <div className="card rows">
               {members.map((m, i) => (
-                <li key={i}>
-                  {m.first_name}
-                  {m.username ? ` (@${m.username})` : ""} —{" "}
-                  {m.role === "admin" ? wt(lang, "role_admin") : wt(lang, "role_player")}
-                  {m.plays ? "" : ` · ${wt(lang, "not_playing")}`}
-                </li>
+                <div key={i} className="row">
+                  <div className="avatar avatar-sm">{String(m.first_name).charAt(0).toUpperCase()}</div>
+                  <span className="member-name">{m.first_name}</span>
+                  {m.username && <span className="muted small">@{m.username}</span>}
+                  <span className={m.role === "admin" ? "badge badge-admin" : "badge"}>
+                    {m.role === "admin" ? wt(lang, "role_admin") : wt(lang, "role_player")}
+                  </span>
+                  {!m.plays && <span className="muted small">{wt(lang, "not_playing")}</span>}
+                </div>
               ))}
-            </ul>
+            </div>
           </section>
         )}
 
-        <p className="text-sm text-gray-500">{wt(lang, "bot_hint")}</p>
+        <p className="muted small" style={{ marginTop: 24 }}>
+          {wt(lang, "bot_hint")}
+        </p>
       </main>
     </>
   );
