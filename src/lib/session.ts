@@ -5,8 +5,7 @@ import { isLang, pickLang, type Lang } from "@/bot/i18n";
 
 export const SESSION_COOKIE = "session";
 export const LANG_COOKIE = "lang";
-export const SESSION_MAX_AGE = 60 * 60 * 24 * 30; // 30 дней
-
+export const SESSION_MAX_AGE = 60 * 60 * 24 * 180; // 180 дней
 function sign(payload: string) {
   return createHmac("sha256", process.env.SESSION_SECRET!).update(payload).digest("base64url");
 }
