@@ -227,3 +227,50 @@ h1, h2, h3, p { margin: 0; }
   .training-date { display: flex; align-items: baseline; gap: 8px; width: auto; padding: 6px 12px; }
   .td-day { font-size: 18px; }
 }
+
+/* ---------- формы и сообщения ---------- */
+.notice { padding: 10px 14px; border-radius: 12px; font-size: 14px; font-weight: 600; }
+.notice-ok { background: var(--green-bg); color: var(--green); }
+.notice-err { background: var(--red-bg); color: var(--red); }
+
+.answer-buttons { display: flex; gap: 8px; flex-wrap: wrap; }
+.btn-yes-active { background: var(--green); border-color: var(--green); color: #fff; }
+.btn-yes-active:hover { background: var(--green); }
+.btn-no-active { background: var(--red); border-color: var(--red); color: #fff; }
+.btn-no-active:hover { background: var(--red); }
+.btn-danger { color: var(--red); }
+
+details.card > summary { cursor: pointer; font-weight: 700; list-style: none; }
+details.card > summary::-webkit-details-marker { display: none; }
+details.card[open] > summary { margin-bottom: 14px; }
+
+.form { display: grid; gap: 12px; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.field { display: grid; gap: 4px; font-size: 13px; color: var(--muted); font-weight: 600; }
+.field input[type="text"],
+.field input[type="date"],
+.field input[type="time"],
+.field input[type="number"] {
+  padding: 9px 11px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+  font-size: 15px;
+  font-family: inherit;
+  width: 100%;
+}
+.days { display: flex; flex-wrap: wrap; gap: 8px; }
+.day-check {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-size: 14px;
+  color: var(--text);
+  cursor: pointer;
+}
+.row-actions { margin: 0 0 0 auto; }
+@media (max-width: 480px) { .form-row { grid-template-columns: 1fr; } }

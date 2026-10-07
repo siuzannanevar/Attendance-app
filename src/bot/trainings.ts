@@ -97,7 +97,7 @@ type PublishResult = "ok" | "format" | "baddate" | "nodate" | "nogroup" | "postf
 type TeamRow = Record<string, any>;
 
 // Создаёт тренировку и публикует опрос в привязанной группе команды
-async function publishTraining(
+export async function publishTraining(
   api: Api,
   team: TeamRow,
   userId: string,
@@ -232,8 +232,9 @@ export function registerTrainings(bot: Bot) {
     const status = match[2];
     const user = await ensureUser(ctx);
 
-    const [tr] = await sql`select team_id, starts_at from trainings where id = ${trainingId}`;
+    const [tr] = await sql`select team_id, starts_at, cancelled_at from trainings where id = ${trainingId}`;
     if (!tr) return ctx.answerCallbackQuery({ text: t(user.lang, "cb_not_found") });
+    if (tr.cancelled_at) return ctx.answerCallbackQuery({ text: t(user.lang, "cb_cancelled") });
     if (tr.starts_at < new Date()) {
       return ctx.answerCallbackQuery({ text: t(user.lang, "cb_past") });
     }

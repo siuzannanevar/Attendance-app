@@ -23,7 +23,7 @@ async function adminTeams(userId: string): Promise<Row[]> {
 }
 
 // Выполняет /newschedule или /timing для выбранной команды и возвращает текст ответа
-async function runAction(
+export async function runAction(
   api: Api,
   kind: string,
   team: Row,

@@ -158,6 +158,9 @@ const ru = {
     "Нажмите кнопку, чтобы войти на сайт. Ссылка работает один раз и действует 10 минут.",
   btn_open_site: "🔐 Открыть сайт",
 
+  cb_cancelled: "Эта тренировка отменена.",
+  training_cancelled: "❌ Тренировка {when} отменена.",
+
   lang_choose_user: "Language / Keel / Язык:",
   lang_choose_group: "Group language / Grupi keel / Язык группы:",
   lang_saved_user: "Язык: {language}.",
@@ -305,6 +308,9 @@ const en: typeof ru = {
     "Press the button to sign in to the website. The link works once and expires in 10 minutes.",
   btn_open_site: "🔐 Open the website",
 
+  cb_cancelled: "This training was cancelled.",
+  training_cancelled: "❌ Training {when} is cancelled.",
+
   lang_choose_user: "Language / Keel / Язык:",
   lang_choose_group: "Group language / Grupi keel / Язык группы:",
   lang_saved_user: "Language: {language}.",
@@ -451,6 +457,9 @@ const et: typeof ru = {
   login_link_text:
     "Vajuta nuppu, et veebisaidile sisse logida. Link toimib ühe korra ja kehtib 10 minutit.",
   btn_open_site: "🔐 Ava sait",
+
+  cb_cancelled: "See treening on tühistatud.",
+  training_cancelled: "❌ Treening {when} on tühistatud.",
 
   lang_choose_user: "Language / Keel / Язык:",
   lang_choose_group: "Group language / Grupi keel / Язык группы:",

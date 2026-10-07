@@ -38,6 +38,7 @@ export async function runTick(api: Api, onlyTeamId?: string | number) {
     from trainings tr join teams tm on tm.id = tr.team_id
     where tr.schedule_id is not null
       and tr.poll_message_id is null
+      and tr.cancelled_at is null
       and tr.starts_at > now()
       and tr.starts_at - make_interval(hours => tm.poll_hours_before) <= now()
       and tm.chat_id is not null
@@ -72,6 +73,7 @@ export async function runTick(api: Api, onlyTeamId?: string | number) {
            tm.id as team_id, tm.name as team_name, tm.chat_id, tm.language, tm.timezone
     from trainings tr join teams tm on tm.id = tr.team_id
     where tr.poll_message_id > 0
+      and tr.cancelled_at is null
       and tr.reminded_at is null
       and tr.starts_at > now()
       and tr.starts_at - make_interval(hours => tm.remind_hours_before) <= now()

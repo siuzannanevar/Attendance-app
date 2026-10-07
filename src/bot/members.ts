@@ -17,7 +17,7 @@ async function refreshPolls(api: Api, teamId: string | number) {
   const rows = await sql`
     select id, poll_chat_id, poll_message_id
     from trainings
-    where team_id = ${teamId} and starts_at > now()
+    where team_id = ${teamId} and starts_at > now() and cancelled_at is null
       and poll_message_id > 0 and poll_chat_id is not null`;
   for (const r of rows) {
     try {
