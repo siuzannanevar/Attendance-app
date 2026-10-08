@@ -55,6 +55,15 @@ const ru = {
   f_add: "Добавить",
   btn_cancel_training: "Отменить тренировку",
   btn_delete_slot: "Удалить",
+  n_timing_ok: "Время опроса и напоминания сохранено.",
+  n_timing_bad:
+    "Числа должны быть от 1 до 336, и опрос должен идти раньше напоминания (первое число не меньше второго).",
+  timing_title: "⏰ Время опроса и напоминания",
+  f_poll_hours: "Опрос за (часов до тренировки)",
+  f_remind_hours: "Напоминание за (часов до тренировки)",
+  timing_hint:
+    "Например: опрос за 48 ч (двое суток), напоминание за 24 ч (сутки). Автоматика запускается примерно раз в сутки, поэтому время приблизительное.",
+  f_save: "Сохранить",
 };
 
 const en: typeof ru = {
@@ -111,6 +120,15 @@ const en: typeof ru = {
   f_add: "Add",
   btn_cancel_training: "Cancel training",
   btn_delete_slot: "Delete",
+  n_timing_ok: "Poll and reminder timing saved.",
+  n_timing_bad:
+    "Numbers must be between 1 and 336, and the poll must come before the reminder (first number not smaller than the second).",
+  timing_title: "⏰ Poll and reminder timing",
+  f_poll_hours: "Poll (hours before training)",
+  f_remind_hours: "Reminder (hours before training)",
+  timing_hint:
+    "For example: poll 48 h (2 days) before, reminder 24 h (1 day) before. The scheduler runs about once a day, so timing is approximate.",
+  f_save: "Save",
 };
 
 const et: typeof ru = {
@@ -167,6 +185,15 @@ const et: typeof ru = {
   f_add: "Lisa",
   btn_cancel_training: "Tühista treening",
   btn_delete_slot: "Kustuta",
+  n_timing_ok: "Küsitluse ja meeldetuletuse aeg salvestatud.",
+  n_timing_bad:
+    "Arvud peavad olema vahemikus 1–336 ja küsitlus peab tulema enne meeldetuletust (esimene arv ei tohi olla väiksem kui teine).",
+  timing_title: "⏰ Küsitluse ja meeldetuletuse aeg",
+  f_poll_hours: "Küsitlus (tundi enne treeningut)",
+  f_remind_hours: "Meeldetuletus (tundi enne treeningut)",
+  timing_hint:
+    "Näiteks: küsitlus 48 h (2 päeva) enne, meeldetuletus 24 h (1 päev) enne. Ajastaja käivitub umbes kord päevas, seega aeg on ligikaudne.",
+  f_save: "Salvesta",
 };
 
 const messages: Record<Lang, typeof ru> = { ru, en, et };

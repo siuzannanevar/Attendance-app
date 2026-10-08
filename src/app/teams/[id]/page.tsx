@@ -12,6 +12,7 @@ import {
   cancelTrainingAction,
   createTrainingAction,
   deleteSlotAction,
+  updateTimingAction,
 } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -32,6 +33,8 @@ const NOTICES: Record<string, { key: WebKey; ok: boolean }> = {
   postfail: { key: "n_postfail", ok: false },
   past: { key: "n_past", ok: false },
   was_cancelled: { key: "n_was_cancelled", ok: false },
+  timing_ok: { key: "n_timing_ok", ok: true },
+  timing_bad: { key: "n_timing_bad", ok: false },
 };
 
 // Части даты для «карточки-календаря»
@@ -320,6 +323,43 @@ export default async function TeamPage(props: {
                 </label>
                 <button type="submit" className="btn btn-primary">
                   {wt(lang, "f_add")}
+                </button>
+              </form>
+            </details>
+          )}
+
+          {isAdmin && (
+            <details className="card" style={{ marginTop: 10 }}>
+              <summary>{wt(lang, "timing_title")}</summary>
+              <form action={updateTimingAction} className="form">
+                <input type="hidden" name="team" value={team.id} />
+                <div className="form-row">
+                  <label className="field">
+                    {wt(lang, "f_poll_hours")}
+                    <input
+                      type="number"
+                      name="poll"
+                      min={1}
+                      max={336}
+                      defaultValue={team.poll_hours_before}
+                      required
+                    />
+                  </label>
+                  <label className="field">
+                    {wt(lang, "f_remind_hours")}
+                    <input
+                      type="number"
+                      name="remind"
+                      min={1}
+                      max={336}
+                      defaultValue={team.remind_hours_before}
+                      required
+                    />
+                  </label>
+                </div>
+                <p className="muted small">{wt(lang, "timing_hint")}</p>
+                <button type="submit" className="btn btn-primary">
+                  {wt(lang, "f_save")}
                 </button>
               </form>
             </details>

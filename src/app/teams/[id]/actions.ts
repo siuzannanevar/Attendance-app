@@ -9,6 +9,7 @@ import { publishTraining } from "@/bot/trainings";
 import { runAction } from "@/bot/schedule";
 import { isLang, type Lang } from "@/bot/i18n";
 import { saveAnswer, cancelTraining } from "@/lib/rsvp";
+import { runTick } from "@/lib/tick";
 
 // Проверяет вход и доступ к команде (admin = true: только организатор)
 async function requireMember(teamId: string, admin: boolean) {
@@ -116,4 +117,31 @@ export async function cancelTrainingAction(formData: FormData): Promise<void> {
 
   await cancelTraining(bot.api, trainingId);
   done(teamId, "cancelled");
+}
+
+// ---------- Время опроса и напоминания
+export async function updateTimingAction(formData: FormData): Promise<void> {
+  const teamId = String(formData.get("team") ?? "");
+  await requireMember(teamId, true);
+
+  const poll = Number(formData.get("poll"));
+  const remind = Number(formData.get("remind"));
+  if (
+    !Number.isInteger(poll) || !Number.isInteger(remind) ||
+    poll < 1 || poll > 336 || remind < 1 || remind > 336 || poll < remind
+  ) {
+    done(teamId, "timing_bad");
+  }
+
+  await sql`
+    update teams set poll_hours_before = ${poll}, remind_hours_before = ${remind}
+    where id = ${teamId}`;
+
+  // Сразу применяем новое время: если опрос уже «пора» публиковать, он уйдёт в группу
+  try {
+    await runTick(bot.api, teamId);
+  } catch (e) {
+    console.error("runTick after timing:", e);
+  }
+  done(teamId, "timing_ok");
 }
