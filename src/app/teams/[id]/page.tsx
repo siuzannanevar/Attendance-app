@@ -3,13 +3,38 @@ import { notFound, redirect } from "next/navigation";
 import Header from "@/components/Header";
 import { sql } from "@/lib/db";
 import { getCurrentUser, getLang } from "@/lib/session";
-import { wt } from "@/lib/web-i18n";
+import { wt, type WebKey } from "@/lib/web-i18n";
 import { weekdayShort } from "@/bot/format";
 import { LOCALES, type Lang } from "@/bot/i18n";
+import {
+  addScheduleAction,
+  answerAction,
+  cancelTrainingAction,
+  createTrainingAction,
+  deleteSlotAction,
+} from "./actions";
 
 export const dynamic = "force-dynamic";
 
-// Части даты для «карточки-календаря»: день недели, число, месяц, время
+// Сообщения после действий: код из адреса → текст и цвет
+const NOTICES: Record<string, { key: WebKey; ok: boolean }> = {
+  saved: { key: "n_saved", ok: true },
+  created: { key: "n_created", ok: true },
+  cancelled: { key: "n_cancelled", ok: true },
+  sched_ok: { key: "n_sched_ok", ok: true },
+  sched_nogroup: { key: "n_sched_nogroup", ok: true },
+  slot_deleted: { key: "n_slot_deleted", ok: true },
+  err: { key: "n_err", ok: false },
+  format: { key: "n_format", ok: false },
+  baddate: { key: "n_baddate", ok: false },
+  nodate: { key: "n_nodate", ok: false },
+  nogroup: { key: "n_nogroup", ok: false },
+  postfail: { key: "n_postfail", ok: false },
+  past: { key: "n_past", ok: false },
+  was_cancelled: { key: "n_was_cancelled", ok: false },
+};
+
+// Части даты для «карточки-календаря»
 function dateParts(date: Date, tz: string, lang: Lang) {
   const loc = LOCALES[lang];
   const f = (o: Intl.DateTimeFormatOptions) =>
@@ -22,8 +47,12 @@ function dateParts(date: Date, tz: string, lang: Lang) {
   };
 }
 
-export default async function TeamPage(props: { params: Promise<{ id: string }> }) {
+export default async function TeamPage(props: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ n?: string }>;
+}) {
   const { id } = await props.params;
+  const { n } = await props.searchParams;
   const user = await getCurrentUser();
   if (!user) redirect("/");
   if (!/^\d+$/.test(id)) notFound();
@@ -38,7 +67,7 @@ export default async function TeamPage(props: { params: Promise<{ id: string }> 
   const isAdmin = team.role === "admin";
 
   const slots = await sql`
-    select weekday, start_time, place, needed_players
+    select id, weekday, start_time, place, needed_players
     from schedules
     where team_id = ${team.id} and active
     order by weekday, start_time`;
@@ -53,7 +82,7 @@ export default async function TeamPage(props: { params: Promise<{ id: string }> 
       ) as no_answer,
       (select status from rsvps r where r.training_id = tr.id and r.user_id = ${user.id}) as my_status
     from trainings tr
-    where tr.team_id = ${team.id} and tr.starts_at > now()
+    where tr.team_id = ${team.id} and tr.starts_at > now() and tr.cancelled_at is null
     order by tr.starts_at
     limit 10`;
 
@@ -79,8 +108,8 @@ export default async function TeamPage(props: { params: Promise<{ id: string }> 
 
   const answerLabel = (s: string | null) =>
     s === "going" ? wt(lang, "ans_going") : s === "not_going" ? wt(lang, "ans_not_going") : wt(lang, "ans_none");
-  const answerClass = (s: string | null) =>
-    s === "going" ? "badge badge-green" : s === "not_going" ? "badge badge-red" : "badge";
+  const notice = n ? NOTICES[n] : undefined;
+  const today = new Date().toISOString().slice(0, 10);
 
   return (
     <>
@@ -99,8 +128,47 @@ export default async function TeamPage(props: { params: Promise<{ id: string }> 
           </span>
         </div>
 
+        {notice && (
+          <div className={notice.ok ? "notice notice-ok" : "notice notice-err"} style={{ marginTop: 14 }}>
+            {wt(lang, notice.key)}
+          </div>
+        )}
+
         <section className="section">
           <h2 className="section-title">{wt(lang, "upcoming")}</h2>
+
+          {isAdmin && (
+            <details className="card" style={{ marginBottom: 10 }}>
+              <summary>{wt(lang, "new_training")}</summary>
+              <form action={createTrainingAction} className="form">
+                <input type="hidden" name="team" value={team.id} />
+                <div className="form-row">
+                  <label className="field">
+                    {wt(lang, "f_date")}
+                    <input type="date" name="date" min={today} required />
+                  </label>
+                  <label className="field">
+                    {wt(lang, "f_time")}
+                    <input type="time" name="time" defaultValue="19:00" required />
+                  </label>
+                </div>
+                <div className="form-row">
+                  <label className="field">
+                    {wt(lang, "f_need")}
+                    <input type="number" name="need" min={0} max={999} defaultValue={12} />
+                  </label>
+                  <label className="field">
+                    {wt(lang, "f_place")}
+                    <input type="text" name="place" maxLength={100} />
+                  </label>
+                </div>
+                <button type="submit" className="btn btn-primary">
+                  {wt(lang, "f_create")}
+                </button>
+              </form>
+            </details>
+          )}
+
           {trainings.length === 0 ? (
             <div className="card empty">{wt(lang, "no_upcoming")}</div>
           ) : (
@@ -141,17 +209,45 @@ export default async function TeamPage(props: { params: Promise<{ id: string }> 
                       </div>
                       {goingNames[tr.id] && (
                         <div className="names">
-                          {goingNames[tr.id].map((n, i) => (
+                          {goingNames[tr.id].map((nm, i) => (
                             <span key={i} className="name-tag">
-                              {n}
+                              {nm}
                             </span>
                           ))}
                         </div>
                       )}
-                      <div className="your">
-                        {wt(lang, "your_answer")}:
-                        <span className={answerClass(tr.my_status)}>{answerLabel(tr.my_status)}</span>
-                      </div>
+
+                      <div className="your">{wt(lang, "your_answer")}: {answerLabel(tr.my_status)}</div>
+                      <form action={answerAction} className="answer-buttons">
+                        <input type="hidden" name="team" value={team.id} />
+                        <input type="hidden" name="training" value={tr.id} />
+                        <button
+                          type="submit"
+                          name="status"
+                          value="going"
+                          className={tr.my_status === "going" ? "btn btn-yes-active" : "btn"}
+                        >
+                          ✅ {wt(lang, "ans_going")}
+                        </button>
+                        <button
+                          type="submit"
+                          name="status"
+                          value="not_going"
+                          className={tr.my_status === "not_going" ? "btn btn-no-active" : "btn"}
+                        >
+                          ❌ {wt(lang, "ans_not_going")}
+                        </button>
+                      </form>
+
+                      {isAdmin && (
+                        <form action={cancelTrainingAction}>
+                          <input type="hidden" name="team" value={team.id} />
+                          <input type="hidden" name="training" value={tr.id} />
+                          <button type="submit" className="btn btn-ghost btn-danger">
+                            {wt(lang, "btn_cancel_training")}
+                          </button>
+                        </form>
+                      )}
                     </div>
                   </article>
                 );
@@ -166,12 +262,21 @@ export default async function TeamPage(props: { params: Promise<{ id: string }> 
             <div className="card empty">{wt(lang, "no_schedule")}</div>
           ) : (
             <div className="card rows">
-              {slots.map((s, i) => (
-                <div key={i} className="row">
+              {slots.map((s) => (
+                <div key={s.id} className="row">
                   <span className="pill">{weekdayShort(lang, s.weekday)}</span>
                   <span className="slot-time">{String(s.start_time).slice(0, 5)}</span>
                   {s.needed_players ? <span className="muted">👥 {s.needed_players}</span> : null}
                   {s.place ? <span className="muted">📍 {s.place}</span> : null}
+                  {isAdmin && (
+                    <form action={deleteSlotAction} className="row-actions">
+                      <input type="hidden" name="team" value={team.id} />
+                      <input type="hidden" name="slot" value={s.id} />
+                      <button type="submit" className="btn btn-ghost btn-danger">
+                        🗑 {wt(lang, "btn_delete_slot")}
+                      </button>
+                    </form>
+                  )}
                 </div>
               ))}
               <p className="muted small">
@@ -181,6 +286,43 @@ export default async function TeamPage(props: { params: Promise<{ id: string }> 
                 })}
               </p>
             </div>
+          )}
+
+          {isAdmin && (
+            <details className="card" style={{ marginTop: 10 }}>
+              <summary>{wt(lang, "add_slot")}</summary>
+              <form action={addScheduleAction} className="form">
+                <input type="hidden" name="team" value={team.id} />
+                <div className="field">
+                  {wt(lang, "f_days")}
+                  <div className="days">
+                    {[1, 2, 3, 4, 5, 6, 7].map((d) => (
+                      <label key={d} className="day-check">
+                        <input type="checkbox" name="day" value={d} />
+                        {weekdayShort(lang, d)}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+                <div className="form-row">
+                  <label className="field">
+                    {wt(lang, "f_time")}
+                    <input type="time" name="time" defaultValue="19:00" required />
+                  </label>
+                  <label className="field">
+                    {wt(lang, "f_need")}
+                    <input type="number" name="need" min={0} max={999} defaultValue={12} />
+                  </label>
+                </div>
+                <label className="field">
+                  {wt(lang, "f_place")}
+                  <input type="text" name="place" maxLength={100} />
+                </label>
+                <button type="submit" className="btn btn-primary">
+                  {wt(lang, "f_add")}
+                </button>
+              </form>
+            </details>
           )}
         </section>
 
