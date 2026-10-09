@@ -5,7 +5,7 @@ import { sql } from "@/lib/db";
 import { ensureUser } from "./helpers";
 import { t } from "./i18n";
 
-const siteUrl = () => process.env.SITE_URL ?? "https://attendance-app-siuzanna.vercel.app";
+const siteUrl = () => process.env.SITE_URL ?? "https://attendance-app-ten-topaz.vercel.app";
 
 // Выдаёт одноразовую ссылку для входа на сайт. Ссылка уходит только в личный чат этого человека.
 async function sendLoginLink(ctx: Context) {
@@ -16,8 +16,12 @@ async function sendLoginLink(ctx: Context) {
   await sql`insert into login_links (secret, user_id) values (${secret}, ${user.id})`;
   const link = `${siteUrl()}/api/auth/confirm?s=${secret}`;
 
+  // Две кнопки: открыть внутри Telegram (вход автоматический) и в браузере (одноразовая ссылка)
   return ctx.reply(t(user.lang, "login_link_text"), {
-    reply_markup: new InlineKeyboard().url(t(user.lang, "btn_open_site"), link),
+    reply_markup: new InlineKeyboard()
+      .webApp(t(user.lang, "btn_open_app"), siteUrl())
+      .row()
+      .url(t(user.lang, "btn_open_site"), link),
   });
 }
 

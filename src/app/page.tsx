@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import Header from "@/components/Header";
+import WebAppAutoLogin from "@/components/WebAppAutoLogin";
 import { getCurrentUser, getLang } from "@/lib/session";
 import { wt } from "@/lib/web-i18n";
 
@@ -17,6 +18,7 @@ export default async function Home({
 
   return (
     <>
+      <WebAppAutoLogin />
       <Header lang={lang} next="/" />
       <main className="auth">
         <div className="auth-card">

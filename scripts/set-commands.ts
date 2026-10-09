@@ -22,6 +22,13 @@ async function main() {
     await api.setMyCommands(list.et, { scope, language_code: "et" });
     console.log("Готово:", scope.type);
   }
+
+  // Кнопка меню рядом с полем ввода: открывает сайт внутри Telegram (вход автоматический)
+  const site = process.env.SITE_URL ?? "https://attendance-app-ten-topaz.vercel.app";
+  await api.setChatMenuButton({
+    menu_button: { type: "web_app", text: "📋 Site", web_app: { url: site } },
+  });
+  console.log("Кнопка меню ведёт на:", site);
 }
 
 main().catch((e) => {
