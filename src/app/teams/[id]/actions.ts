@@ -10,6 +10,7 @@ import { runAction } from "@/bot/schedule";
 import { isLang, type Lang } from "@/bot/i18n";
 import { applyAnswer, cancelTraining } from "@/lib/rsvp";
 import { runTick } from "@/lib/tick";
+import { removeMember, setOrganizer, togglePlays } from "@/lib/members";
 
 // Проверяет вход и доступ к команде (admin = true: только организатор)
 async function requireMember(teamId: string, admin: boolean) {
@@ -156,4 +157,34 @@ export async function updateTimingAction(formData: FormData): Promise<void> {
     console.error("runTick after timing:", e);
   }
   done(teamId, "timing_ok");
+}
+
+// ---------- Участники: удалить, назначить / снять организатора, «я не играю»
+export async function removeMemberAction(formData: FormData): Promise<void> {
+  const teamId = String(formData.get("team") ?? "");
+  const targetId = String(formData.get("target") ?? "");
+  const { user } = await requireMember(teamId, true);
+  if (!/^\d+$/.test(targetId)) done(teamId, "err");
+
+  const res = await removeMember(bot.api, teamId, user.id, targetId);
+  done(teamId, res === "ok" ? "member_removed" : res === "owner_only" ? "owner_only" : res === "self" ? "self" : "err");
+}
+
+export async function setOrganizerAction(formData: FormData): Promise<void> {
+  const teamId = String(formData.get("team") ?? "");
+  const targetId = String(formData.get("target") ?? "");
+  const makeAdmin = String(formData.get("mode") ?? "make") !== "remove";
+  const { user } = await requireMember(teamId, true);
+  if (!/^\d+$/.test(targetId)) done(teamId, "err");
+
+  const res = await setOrganizer(bot.api, teamId, user.id, targetId, makeAdmin);
+  if (res === "ok") done(teamId, makeAdmin ? "org_added" : "org_removed");
+  done(teamId, res === "owner_only" ? "owner_only" : "err");
+}
+
+export async function togglePlaysAction(formData: FormData): Promise<void> {
+  const teamId = String(formData.get("team") ?? "");
+  const { user } = await requireMember(teamId, true);
+  const plays = await togglePlays(bot.api, teamId, user.id);
+  done(teamId, plays === null ? "err" : plays ? "plays_on" : "plays_off");
 }

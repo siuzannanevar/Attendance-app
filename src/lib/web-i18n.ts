@@ -74,6 +74,19 @@ const ru = {
   free_spots: "Свободно",
   later_label: "Подумают",
   ans_later_btn: "🤔 Отвечу позже",
+  btn_make_org: "👑 Назначить организатором",
+  btn_remove_org: "⬇️ Снять роль организатора",
+  btn_remove_member: "🗑 Удалить из команды",
+  btn_confirm_remove: "Да, удалить",
+  btn_play_off: "🚫 Я не играю — не считать меня",
+  btn_play_on: "🏃 Я играю — считать меня",
+  n_member_removed: "Участник удалён из команды.",
+  n_org_added: "Участник назначен организатором.",
+  n_org_removed: "Роль организатора снята.",
+  n_plays_on: "Теперь вы учитываетесь в опросах.",
+  n_plays_off: "Вас больше не считают среди неответивших.",
+  n_owner_only: "Менять роль и удалять организаторов может только создатель команды.",
+  n_self: "Себя удалить нельзя. Чтобы выйти из команды, используйте /leave в боте.",
 };
 
 const en: typeof ru = {
@@ -149,6 +162,19 @@ const en: typeof ru = {
   free_spots: "Free",
   later_label: "Thinking",
   ans_later_btn: "🤔 Answer later",
+  btn_make_org: "👑 Make organizer",
+  btn_remove_org: "⬇️ Remove organizer role",
+  btn_remove_member: "🗑 Remove from team",
+  btn_confirm_remove: "Yes, remove",
+  btn_play_off: "🚫 I don't play — don't count me",
+  btn_play_on: "🏃 I play — count me",
+  n_member_removed: "Member removed from the team.",
+  n_org_added: "Member made an organizer.",
+  n_org_removed: "Organizer role removed.",
+  n_plays_on: "You are now counted in the polls.",
+  n_plays_off: "You are no longer counted among those who haven't answered.",
+  n_owner_only: "Only the team's creator can change or remove organizers.",
+  n_self: "You can't remove yourself. To leave the team, use /leave in the bot.",
 };
 
 const et: typeof ru = {
@@ -224,6 +250,19 @@ const et: typeof ru = {
   free_spots: "Vabu",
   later_label: "Mõtlevad",
   ans_later_btn: "🤔 Vastan hiljem",
+  btn_make_org: "👑 Määra korraldajaks",
+  btn_remove_org: "⬇️ Võta korraldaja roll",
+  btn_remove_member: "🗑 Eemalda meeskonnast",
+  btn_confirm_remove: "Jah, eemalda",
+  btn_play_off: "🚫 Ma ei mängi — ära arvesta mind",
+  btn_play_on: "🏃 Ma mängin — arvesta mind",
+  n_member_removed: "Liige eemaldati meeskonnast.",
+  n_org_added: "Liige määrati korraldajaks.",
+  n_org_removed: "Korraldaja roll võeti ära.",
+  n_plays_on: "Sind arvestatakse nüüd küsitlustes.",
+  n_plays_off: "Sind ei loeta enam vastamata jätnute hulka.",
+  n_owner_only: "Organisaatorite rolli muuta ja neid eemaldada saab ainult meeskonna looja.",
+  n_self: "Iseennast ei saa eemaldada. Meeskonnast lahkumiseks kasuta botis käsku /leave.",
 };
 
 const messages: Record<Lang, typeof ru> = { ru, en, et };

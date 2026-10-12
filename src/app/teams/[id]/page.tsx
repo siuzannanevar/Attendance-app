@@ -12,6 +12,9 @@ import {
   cancelTrainingAction,
   createTrainingAction,
   deleteSlotAction,
+  removeMemberAction,
+  setOrganizerAction,
+  togglePlaysAction,
   updateTimingAction,
 } from "./actions";
 
@@ -39,6 +42,13 @@ const NOTICES: Record<string, { key: WebKey; ok: boolean }> = {
   queue: { key: "n_queue", ok: true },
   out: { key: "n_out", ok: true },
   later_saved: { key: "n_later", ok: true },
+  member_removed: { key: "n_member_removed", ok: true },
+  org_added: { key: "n_org_added", ok: true },
+  org_removed: { key: "n_org_removed", ok: true },
+  plays_on: { key: "n_plays_on", ok: true },
+  plays_off: { key: "n_plays_off", ok: true },
+  owner_only: { key: "n_owner_only", ok: false },
+  self: { key: "n_self", ok: false },
 };
 
 // Части даты для «карточки-календаря»
@@ -67,11 +77,12 @@ export default async function TeamPage(props: {
 
   // Доступ только участникам этой команды
   const [team] = await sql`
-    select tm.id, tm.name, tm.timezone, tm.poll_hours_before, tm.remind_hours_before, m.role
+    select tm.id, tm.name, tm.timezone, tm.created_by, tm.poll_hours_before, tm.remind_hours_before, m.role
     from teams tm join memberships m on m.team_id = tm.id
     where tm.id = ${id} and m.user_id = ${user.id}`;
   if (!team) notFound();
   const isAdmin = team.role === "admin";
+  const isOwner = String(team.created_by) === String(user.id);
 
   const slots = await sql`
     select id, weekday, start_time, place, needed_players
@@ -110,7 +121,7 @@ export default async function TeamPage(props: {
 
   const members = isAdmin
     ? await sql`
-        select u.first_name, u.username, m.role, m.plays
+        select u.id, u.first_name, u.username, m.role, m.plays
         from memberships m join users u on u.id = m.user_id
         where m.team_id = ${team.id}
         order by (m.role = 'admin') desc, u.first_name`
@@ -425,17 +436,56 @@ export default async function TeamPage(props: {
           <section className="section">
             <h2 className="section-title">{wt(lang, "members")}</h2>
             <div className="card rows">
-              {members.map((m, i) => (
-                <div key={i} className="row">
-                  <div className="avatar avatar-sm">{String(m.first_name).charAt(0).toUpperCase()}</div>
-                  <span className="member-name">{m.first_name}</span>
-                  {m.username && <span className="muted small">@{m.username}</span>}
-                  <span className={m.role === "admin" ? "badge badge-admin" : "badge"}>
-                    {m.role === "admin" ? wt(lang, "role_admin") : wt(lang, "role_player")}
-                  </span>
-                  {!m.plays && <span className="muted small">{wt(lang, "not_playing")}</span>}
-                </div>
-              ))}
+              {members.map((m) => {
+                const isMe = String(m.id) === String(user.id);
+                const targetIsAdmin = m.role === "admin";
+                // организаторов меняет и удаляет только создатель команды
+                const canManage = !isMe && (!targetIsAdmin || isOwner);
+                return (
+                  <div key={m.id} className="row">
+                    <div className="avatar avatar-sm">{String(m.first_name).charAt(0).toUpperCase()}</div>
+                    <span className="member-name">{m.first_name}</span>
+                    {m.username && <span className="muted small">@{m.username}</span>}
+                    <span className={targetIsAdmin ? "badge badge-admin" : "badge"}>
+                      {targetIsAdmin ? wt(lang, "role_admin") : wt(lang, "role_player")}
+                    </span>
+                    {!m.plays && <span className="muted small">{wt(lang, "not_playing")}</span>}
+
+                    <div className="member-actions">
+                      {isMe && (
+                        <form action={togglePlaysAction}>
+                          <input type="hidden" name="team" value={team.id} />
+                          <button type="submit" className="btn btn-ghost">
+                            {m.plays ? wt(lang, "btn_play_off") : wt(lang, "btn_play_on")}
+                          </button>
+                        </form>
+                      )}
+                      {canManage && (
+                        <>
+                          <form action={setOrganizerAction}>
+                            <input type="hidden" name="team" value={team.id} />
+                            <input type="hidden" name="target" value={m.id} />
+                            <input type="hidden" name="mode" value={targetIsAdmin ? "remove" : "make"} />
+                            <button type="submit" className="btn btn-ghost">
+                              {targetIsAdmin ? wt(lang, "btn_remove_org") : wt(lang, "btn_make_org")}
+                            </button>
+                          </form>
+                          <details className="confirm">
+                            <summary className="btn btn-ghost btn-danger">{wt(lang, "btn_remove_member")}</summary>
+                            <form action={removeMemberAction}>
+                              <input type="hidden" name="team" value={team.id} />
+                              <input type="hidden" name="target" value={m.id} />
+                              <button type="submit" className="btn btn-danger-solid">
+                                {wt(lang, "btn_confirm_remove")}
+                              </button>
+                            </form>
+                          </details>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </section>
         )}
