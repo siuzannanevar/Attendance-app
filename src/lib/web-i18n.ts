@@ -47,7 +47,7 @@ const ru = {
   new_training: "➕ Новая тренировка",
   f_date: "Дата",
   f_time: "Время",
-  f_need: "Нужно игроков (0 — без счётчика)",
+  f_need: "Мест (0 — без ограничения)",
   f_place: "Место",
   f_create: "Создать и отправить опрос",
   add_slot: "➕ Добавить в расписание",
@@ -64,6 +64,16 @@ const ru = {
   timing_hint:
     "Например: опрос за 48 ч (двое суток), напоминание за 24 ч (сутки). Автоматика запускается примерно раз в сутки, поэтому время приблизительное.",
   f_save: "Сохранить",
+  n_in: "Вы идёте ✅",
+  n_queue: "Мест нет: вы в очереди. Если кто-то откажется, место достанется вам по порядку.",
+  n_out: "Ответ сохранён: вы не идёте.",
+  n_later: "Хорошо, напомним через час в Telegram.",
+  ans_later: "Отвечу позже",
+  ans_queue: "В очереди №{n}",
+  waitlist: "В очереди",
+  free_spots: "Свободно",
+  later_label: "Подумают",
+  ans_later_btn: "🤔 Отвечу позже",
 };
 
 const en: typeof ru = {
@@ -112,7 +122,7 @@ const en: typeof ru = {
   new_training: "➕ New training",
   f_date: "Date",
   f_time: "Time",
-  f_need: "Players needed (0 — no counter)",
+  f_need: "Places (0 — unlimited)",
   f_place: "Place",
   f_create: "Create and send poll",
   add_slot: "➕ Add to schedule",
@@ -129,6 +139,16 @@ const en: typeof ru = {
   timing_hint:
     "For example: poll 48 h (2 days) before, reminder 24 h (1 day) before. The scheduler runs about once a day, so timing is approximate.",
   f_save: "Save",
+  n_in: "You're in ✅",
+  n_queue: "No spots left: you're on the waiting list. If someone drops out, you'll get the spot in order.",
+  n_out: "Saved: you're not going.",
+  n_later: "OK, we'll remind you in an hour in Telegram.",
+  ans_later: "Answer later",
+  ans_queue: "Waiting list #{n}",
+  waitlist: "Waiting list",
+  free_spots: "Free",
+  later_label: "Thinking",
+  ans_later_btn: "🤔 Answer later",
 };
 
 const et: typeof ru = {
@@ -177,7 +197,7 @@ const et: typeof ru = {
   new_training: "➕ Uus treening",
   f_date: "Kuupäev",
   f_time: "Kellaaeg",
-  f_need: "Mängijaid vaja (0 — ilma loenduseta)",
+  f_need: "Kohti (0 — piiranguta)",
   f_place: "Koht",
   f_create: "Loo ja saada küsitlus",
   add_slot: "➕ Lisa ajakavasse",
@@ -194,6 +214,16 @@ const et: typeof ru = {
   timing_hint:
     "Näiteks: küsitlus 48 h (2 päeva) enne, meeldetuletus 24 h (1 päev) enne. Ajastaja käivitub umbes kord päevas, seega aeg on ligikaudne.",
   f_save: "Salvesta",
+  n_in: "Sa tuled ✅",
+  n_queue: "Kohti pole: oled ootejärjekorras. Kui keegi loobub, saad koha järjekorras.",
+  n_out: "Salvestatud: sa ei tule.",
+  n_later: "Hea küll, tuletame tunni aja pärast Telegramis meelde.",
+  ans_later: "Vastan hiljem",
+  ans_queue: "Ootejärjekorras nr {n}",
+  waitlist: "Ootejärjekord",
+  free_spots: "Vabu",
+  later_label: "Mõtlevad",
+  ans_later_btn: "🤔 Vastan hiljem",
 };
 
 const messages: Record<Lang, typeof ru> = { ru, en, et };

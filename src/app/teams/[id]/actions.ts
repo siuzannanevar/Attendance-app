@@ -8,7 +8,7 @@ import { getCurrentUser } from "@/lib/session";
 import { publishTraining } from "@/bot/trainings";
 import { runAction } from "@/bot/schedule";
 import { isLang, type Lang } from "@/bot/i18n";
-import { saveAnswer, cancelTraining } from "@/lib/rsvp";
+import { applyAnswer, cancelTraining } from "@/lib/rsvp";
 import { runTick } from "@/lib/tick";
 
 // Проверяет вход и доступ к команде (admin = true: только организатор)
@@ -31,18 +31,30 @@ function done(teamId: string, code: string): never {
   redirect(`/teams/${teamId}?n=${code}`);
 }
 
-// ---------- Ответ «Иду / Не иду» с сайта
+// ---------- Ответ «Иду / Не иду / Отвечу позже» с сайта
 export async function answerAction(formData: FormData): Promise<void> {
   const teamId = String(formData.get("team") ?? "");
   const trainingId = String(formData.get("training") ?? "");
   const status = String(formData.get("status") ?? "");
   const { user } = await requireMember(teamId, false);
 
-  if (!/^\d+$/.test(trainingId) || (status !== "going" && status !== "not_going")) {
+  if (
+    !/^\d+$/.test(trainingId) ||
+    (status !== "going" && status !== "not_going" && status !== "later")
+  ) {
     done(teamId, "err");
   }
-  const res = await saveAnswer(bot.api, user.id, trainingId, teamId, status);
-  done(teamId, res === "ok" || res === "same" ? "saved" : res === "cancelled" ? "was_cancelled" : res);
+
+  const res = await applyAnswer(bot.api, user.id, trainingId, status, teamId);
+  if (res.result === "ok") {
+    if (status === "going") done(teamId, res.placement === "waitlist" ? "queue" : "in");
+    if (status === "later") done(teamId, "later_saved");
+    done(teamId, "out");
+  }
+  if (res.result === "same") done(teamId, "saved");
+  if (res.result === "cancelled") done(teamId, "was_cancelled");
+  if (res.result === "past") done(teamId, "past");
+  done(teamId, "err");
 }
 
 // ---------- Новая разовая тренировка

@@ -5,6 +5,7 @@ import { registerLanguage } from "./language";
 import { registerSchedule } from "./schedule";
 import { registerMembers } from "./members";
 import { registerLogin } from "./login";
+import { registerAnswers } from "./answers";
 
 export const bot = new Bot(process.env.TELEGRAM_BOT_TOKEN!);
 
@@ -12,6 +13,7 @@ registerLogin(bot); // до registerTeams: перехватывает /start log
 registerLanguage(bot);
 registerTeams(bot);
 registerTrainings(bot);
+registerAnswers(bot);
 registerSchedule(bot);
 registerMembers(bot);
 

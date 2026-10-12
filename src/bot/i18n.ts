@@ -26,10 +26,10 @@ const ru = {
     "В личном чате со мной:\n" +
     "/newteam Название — создать команду\n" +
     "/join КОД — вступить в команду по коду\n" +
-    "/newschedule ДНИ ЧЧ:ММ МИН Место — регулярные тренировки (опросы и напоминания приходят сами)\n" +
+    "/newschedule ДНИ ЧЧ:ММ МЕСТ Место — регулярные тренировки (опросы и напоминания приходят сами)\n" +
     "/schedule — расписание\n" +
     "/timing ОПРОС НАПОМИНАНИЕ — за сколько часов публиковать (по умолчанию 48 и 24)\n" +
-    "/newtraining ДД.ММ ЧЧ:ММ МИН Место — разовая тренировка\n" +
+    "/newtraining ДД.ММ ЧЧ:ММ МЕСТ Место — разовая тренировка\n" +
     "/login — ссылка для входа на сайт\n" +
     "/members — участники команды (удалить, не считать себя)\n" +
     "/leave — выйти из команды\n" +
@@ -66,7 +66,7 @@ const ru = {
   newtraining_notlinked:
     "Эта группа не привязана к команде, или вы не организатор этой команды. Привязка: /linkgroup",
   newtraining_format:
-    "Формат: /newtraining ДД.ММ ЧЧ:ММ МИН_ИГРОКОВ Место\nПример: /newtraining 15.10 19:00 12 Спортзал колледжа",
+    "Формат: /newtraining ДД.ММ ЧЧ:ММ МЕСТ Место\nПример: /newtraining 15.10 19:00 12 Спортзал колледжа",
   newtraining_baddate: "Похоже, дата или время указаны неверно. Пример: 15.10 19:00",
   newtraining_nodate: "Не получилось определить дату. Пример: 15.10 19:00",
   newtraining_no_admin_team: "Вы не организатор ни одной команды. Создайте команду: /newteam",
@@ -98,7 +98,7 @@ const ru = {
   choose_team: "Для какой команды?",
 
   schedule_usage:
-    "Формат: /newschedule ДНИ ЧЧ:ММ МИН Место\nПример: /newschedule ср,пт 19:00 12 Спортзал колледжа\nДни: пн, вт, ср, чт, пт, сб, вс (или цифры 1–7)",
+    "Формат: /newschedule ДНИ ЧЧ:ММ МЕСТ Место\nПример: /newschedule ср,пт 19:00 12 Спортзал колледжа\nДни: пн, вт, ср, чт, пт, сб, вс (или цифры 1–7)",
   schedule_bad_day:
     "Не понимаю день недели «{day}». Используйте: пн, вт, ср, чт, пт, сб, вс или цифры 1–7.",
   schedule_bad_time: "Время указано неверно. Пример: 19:00",
@@ -162,6 +162,18 @@ const ru = {
   cb_cancelled: "Эта тренировка отменена.",
   training_cancelled: "❌ Тренировка {when} отменена.",
 
+  btn_later: "🤔 Отвечу позже",
+  poll_waitlist: "🪑 В очереди ({n}):",
+  poll_free: "🆓 Свободных мест: {n}",
+  poll_later: "🤔 Ответят позже: {n}",
+  cb_in_queue: "Мест нет, вы в очереди: №{n}",
+  cb_saved_later: "Напомню через час 🤔",
+  promoted_dm: "🎉 Освободилось место! Вы идёте на тренировку {when} ({team}).",
+  org_left: "ℹ️ {name} больше не идёт на тренировку {when}. Идут: {count}.",
+  org_free: "Свободных мест: {free}.",
+  org_promoted: "Из очереди занял место: {names}.",
+  later_reminder: "⏰ Вы просили напомнить про тренировку. Вот что сейчас:",
+
   lang_choose_user: "Language / Keel / Язык:",
   lang_choose_group: "Group language / Grupi keel / Язык группы:",
   lang_saved_user: "Язык: {language}.",
@@ -177,10 +189,10 @@ const en: typeof ru = {
     "In a private chat with me:\n" +
     "/newteam Name — create a team\n" +
     "/join CODE — join a team with an invite code\n" +
-    "/newschedule DAYS HH:MM MIN Place — recurring trainings (polls and reminders are sent automatically)\n" +
+    "/newschedule DAYS HH:MM PLACES Place — recurring trainings (polls and reminders are sent automatically)\n" +
     "/schedule — the schedule\n" +
     "/timing POLL REMINDER — how many hours before to post (default 48 and 24)\n" +
-    "/newtraining DD.MM HH:MM MIN Place — a one-off training\n" +
+    "/newtraining DD.MM HH:MM PLACES Place — a one-off training\n" +
     "/login — sign-in link for the website\n" +
     "/members — team members (remove, mark yourself as not playing)\n" +
     "/leave — leave a team\n" +
@@ -217,7 +229,7 @@ const en: typeof ru = {
   newtraining_notlinked:
     "This group is not linked to a team, or you are not an organizer of that team. Link it with /linkgroup",
   newtraining_format:
-    "Format: /newtraining DD.MM HH:MM MIN_PLAYERS Place\nExample: /newtraining 15.10 19:00 12 College gym",
+    "Format: /newtraining DD.MM HH:MM PLACES Place\nExample: /newtraining 15.10 19:00 12 College gym",
   newtraining_baddate: "The date or time looks invalid. Example: 15.10 19:00",
   newtraining_nodate: "Could not work out the date. Example: 15.10 19:00",
   newtraining_no_admin_team: "You are not an organizer of any team. Create one: /newteam",
@@ -249,7 +261,7 @@ const en: typeof ru = {
   choose_team: "Which team?",
 
   schedule_usage:
-    "Format: /newschedule DAYS HH:MM MIN Place\nExample: /newschedule wed,fri 19:00 12 College gym\nDays: mon, tue, wed, thu, fri, sat, sun (or numbers 1–7)",
+    "Format: /newschedule DAYS HH:MM PLACES Place\nExample: /newschedule wed,fri 19:00 12 College gym\nDays: mon, tue, wed, thu, fri, sat, sun (or numbers 1–7)",
   schedule_bad_day:
     "I don't understand the weekday “{day}”. Use: mon, tue, wed, thu, fri, sat, sun or numbers 1–7.",
   schedule_bad_time: "The time looks invalid. Example: 19:00",
@@ -313,6 +325,18 @@ const en: typeof ru = {
   cb_cancelled: "This training was cancelled.",
   training_cancelled: "❌ Training {when} is cancelled.",
 
+  btn_later: "🤔 Answer later",
+  poll_waitlist: "🪑 Waiting list ({n}):",
+  poll_free: "🆓 Spots left: {n}",
+  poll_later: "🤔 Will answer later: {n}",
+  cb_in_queue: "No spots left, you're on the waiting list: #{n}",
+  cb_saved_later: "I'll remind you in an hour 🤔",
+  promoted_dm: "🎉 A spot opened up! You're going to the training on {when} ({team}).",
+  org_left: "ℹ️ {name} is no longer going to the training on {when}. Going: {count}.",
+  org_free: "Spots left: {free}.",
+  org_promoted: "Moved up from the waiting list: {names}.",
+  later_reminder: "⏰ You asked for a reminder about the training. Here is the current status:",
+
   lang_choose_user: "Language / Keel / Язык:",
   lang_choose_group: "Group language / Grupi keel / Язык группы:",
   lang_saved_user: "Language: {language}.",
@@ -328,10 +352,10 @@ const et: typeof ru = {
     "Privaatvestluses minuga:\n" +
     "/newteam Nimi — loo meeskond\n" +
     "/join KOOD — liitu meeskonnaga kutsekoodiga\n" +
-    "/newschedule PÄEVAD HH:MM MIN Koht — regulaarsed treeningud (küsitlused ja meeldetuletused tulevad ise)\n" +
+    "/newschedule PÄEVAD HH:MM PLACES Koht — regulaarsed treeningud (küsitlused ja meeldetuletused tulevad ise)\n" +
     "/schedule — ajakava\n" +
     "/timing KÜSITLUS MEELDETULETUS — mitu tundi enne postitada (vaikimisi 48 ja 24)\n" +
-    "/newtraining PP.KK HH:MM MIN Koht — ühekordne treening\n" +
+    "/newtraining PP.KK HH:MM PLACES Koht — ühekordne treening\n" +
     "/login — sisselogimise link veebisaidile\n" +
     "/members — meeskonna liikmed (eemalda, ära arvesta ennast)\n" +
     "/leave — lahku meeskonnast\n" +
@@ -368,7 +392,7 @@ const et: typeof ru = {
   newtraining_notlinked:
     "See grupp pole meeskonnaga seotud või sa pole selle meeskonna korraldaja. Seo grupp käsuga /linkgroup",
   newtraining_format:
-    "Vorming: /newtraining PP.KK HH:MM MIN_MÄNGIJAID Koht\nNäide: /newtraining 15.10 19:00 12 Kolledži spordisaal",
+    "Vorming: /newtraining PP.KK HH:MM MÄNGIJAID Koht\nNäide: /newtraining 15.10 19:00 12 Kolledži spordisaal",
   newtraining_baddate: "Kuupäev või kellaaeg tundub vale. Näide: 15.10 19:00",
   newtraining_nodate: "Kuupäeva ei õnnestunud tuvastada. Näide: 15.10 19:00",
   newtraining_no_admin_team: "Sa ei ole ühegi meeskonna korraldaja. Loo meeskond: /newteam",
@@ -400,7 +424,7 @@ const et: typeof ru = {
   choose_team: "Millise meeskonna jaoks?",
 
   schedule_usage:
-    "Vorming: /newschedule PÄEVAD HH:MM MIN Koht\nNäide: /newschedule k,r 19:00 12 Kolledži spordisaal\nPäevad: e, t, k, n, r, l, p (või numbrid 1–7)",
+    "Vorming: /newschedule PÄEVAD HH:MM PLACES Koht\nNäide: /newschedule k,r 19:00 12 Kolledži spordisaal\nPäevad: e, t, k, n, r, l, p (või numbrid 1–7)",
   schedule_bad_day:
     "Ma ei saa nädalapäevast „{day}” aru. Kasuta: e, t, k, n, r, l, p või numbreid 1–7.",
   schedule_bad_time: "Kellaaeg tundub vale. Näide: 19:00",
@@ -463,6 +487,18 @@ const et: typeof ru = {
 
   cb_cancelled: "See treening on tühistatud.",
   training_cancelled: "❌ Treening {when} on tühistatud.",
+
+  btn_later: "🤔 Vastan hiljem",
+  poll_waitlist: "🪑 Ootejärjekorras ({n}):",
+  poll_free: "🆓 Vabu kohti: {n}",
+  poll_later: "🤔 Vastavad hiljem: {n}",
+  cb_in_queue: "Kohti pole, oled ootejärjekorras: nr {n}",
+  cb_saved_later: "Tuletan tunni aja pärast meelde 🤔",
+  promoted_dm: "🎉 Vabanes koht! Sa tuled treeningule {when} ({team}).",
+  org_left: "ℹ️ {name} ei tule enam treeningule {when}. Tulevad: {count}.",
+  org_free: "Vabu kohti: {free}.",
+  org_promoted: "Ootejärjekorrast sai koha: {names}.",
+  later_reminder: "⏰ Palusid treeningust meelde tuletada. Praegune seis:",
 
   lang_choose_user: "Language / Keel / Язык:",
   lang_choose_group: "Group language / Grupi keel / Язык группы:",

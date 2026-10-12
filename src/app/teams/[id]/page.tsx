@@ -35,6 +35,10 @@ const NOTICES: Record<string, { key: WebKey; ok: boolean }> = {
   was_cancelled: { key: "n_was_cancelled", ok: false },
   timing_ok: { key: "n_timing_ok", ok: true },
   timing_bad: { key: "n_timing_bad", ok: false },
+  in: { key: "n_in", ok: true },
+  queue: { key: "n_queue", ok: true },
+  out: { key: "n_out", ok: true },
+  later_saved: { key: "n_later", ok: true },
 };
 
 // Части даты для «карточки-календаря»
@@ -79,6 +83,7 @@ export default async function TeamPage(props: {
     select tr.id, tr.starts_at, tr.place, tr.needed_players,
       (select count(*)::int from rsvps r where r.training_id = tr.id and r.status = 'going') as going,
       (select count(*)::int from rsvps r where r.training_id = tr.id and r.status = 'not_going') as not_going,
+      (select count(*)::int from rsvps r where r.training_id = tr.id and r.status = 'later') as later,
       (select count(*)::int from memberships m
          where m.team_id = tr.team_id and m.plays
            and not exists (select 1 from rsvps r where r.training_id = tr.id and r.user_id = m.user_id)
@@ -89,16 +94,18 @@ export default async function TeamPage(props: {
     order by tr.starts_at
     limit 10`;
 
-  // Имена идущих на ближайшие тренировки
-  const goingNames: Record<string, string[]> = {};
+  // Желающие пойти по порядку ответов (первые N получают места, остальные в очереди)
+  const goingList: Record<string, { id: string; name: string }[]> = {};
   if (trainings.length > 0) {
     const ids = trainings.map((x) => x.id);
     const rows = await sql`
-      select r.training_id, u.first_name
+      select r.training_id, r.user_id, u.first_name
       from rsvps r join users u on u.id = r.user_id
       where r.training_id in ${sql(ids)} and r.status = 'going'
-      order by r.updated_at`;
-    for (const r of rows) (goingNames[r.training_id] ||= []).push(r.first_name);
+      order by r.going_at nulls last, r.updated_at`;
+    for (const r of rows) {
+      (goingList[r.training_id] ||= []).push({ id: String(r.user_id), name: r.first_name });
+    }
   }
 
   const members = isAdmin
@@ -178,9 +185,23 @@ export default async function TeamPage(props: {
             <div className="list">
               {trainings.map((tr) => {
                 const p = dateParts(tr.starts_at, team.timezone, lang);
-                const pct = tr.needed_players
-                  ? Math.min(100, Math.round((tr.going / tr.needed_players) * 100))
-                  : 0;
+                const cap = tr.needed_players ? Number(tr.needed_players) : 0;
+                const list = goingList[tr.id] ?? [];
+                const confirmed = cap ? list.slice(0, cap) : list;
+                const queue = cap ? list.slice(cap) : [];
+                const myIdx = list.findIndex((x) => x.id === String(user.id));
+                const myQueuePos = cap && myIdx >= cap ? myIdx - cap + 1 : 0;
+                const pct = cap ? Math.min(100, Math.round((confirmed.length / cap) * 100)) : 0;
+                const myLabel =
+                  tr.my_status === "going"
+                    ? myQueuePos > 0
+                      ? wt(lang, "ans_queue", { n: myQueuePos })
+                      : wt(lang, "ans_going")
+                    : tr.my_status === "not_going"
+                      ? wt(lang, "ans_not_going")
+                      : tr.my_status === "later"
+                        ? wt(lang, "ans_later")
+                        : wt(lang, "ans_none");
                 return (
                   <article key={tr.id} className="card training">
                     <div className="training-date">
@@ -193,34 +214,60 @@ export default async function TeamPage(props: {
                         <span className="training-time">{p.time}</span>
                         {tr.place && <span className="muted">📍 {tr.place}</span>}
                       </div>
-                      {tr.needed_players ? (
+                      {cap ? (
                         <div className="progress">
                           <div className="progress-bar" style={{ width: `${pct}%` }} />
                         </div>
                       ) : null}
                       <div className="chips">
                         <span className="chip chip-green">
-                          ✅ {wt(lang, "going")}: {tr.going}
-                          {tr.needed_players ? `/${tr.needed_players}` : ""}
+                          ✅ {wt(lang, "going")}: {confirmed.length}
+                          {cap ? `/${cap}` : ""}
                         </span>
+                        {cap ? (
+                          <span className="chip">
+                            🆓 {wt(lang, "free_spots")}: {Math.max(0, cap - confirmed.length)}
+                          </span>
+                        ) : null}
+                        {queue.length > 0 ? (
+                          <span className="chip chip-amber">
+                            🪑 {wt(lang, "waitlist")}: {queue.length}
+                          </span>
+                        ) : null}
                         <span className="chip chip-red">
                           ❌ {wt(lang, "not_going")}: {tr.not_going}
                         </span>
+                        {tr.later > 0 ? (
+                          <span className="chip">
+                            🤔 {wt(lang, "later_label")}: {tr.later}
+                          </span>
+                        ) : null}
                         <span className="chip">
                           ⏳ {wt(lang, "no_answer")}: {tr.no_answer}
                         </span>
                       </div>
-                      {goingNames[tr.id] && (
+                      {confirmed.length > 0 && (
                         <div className="names">
-                          {goingNames[tr.id].map((nm, i) => (
+                          {confirmed.map((x, i) => (
                             <span key={i} className="name-tag">
-                              {nm}
+                              {x.name}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                      {queue.length > 0 && (
+                        <div className="names">
+                          {queue.map((x, i) => (
+                            <span key={i} className="name-tag name-tag-queue">
+                              {i + 1}. {x.name}
                             </span>
                           ))}
                         </div>
                       )}
 
-                      <div className="your">{wt(lang, "your_answer")}: {answerLabel(tr.my_status)}</div>
+                      <div className="your">
+                        {wt(lang, "your_answer")}: <b>{myLabel}</b>
+                      </div>
                       <form action={answerAction} className="answer-buttons">
                         <input type="hidden" name="team" value={team.id} />
                         <input type="hidden" name="training" value={tr.id} />
@@ -239,6 +286,14 @@ export default async function TeamPage(props: {
                           className={tr.my_status === "not_going" ? "btn btn-no-active" : "btn"}
                         >
                           ❌ {wt(lang, "ans_not_going")}
+                        </button>
+                        <button
+                          type="submit"
+                          name="status"
+                          value="later"
+                          className={tr.my_status === "later" ? "btn btn-later-active" : "btn"}
+                        >
+                          {wt(lang, "ans_later_btn")}
                         </button>
                       </form>
 

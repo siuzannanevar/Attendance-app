@@ -7,10 +7,13 @@ import { t, LOCALES, type Lang } from "./i18n";
 function makeKeyboard(trainingId: string | number, lang: Lang) {
   return new InlineKeyboard()
     .text(t(lang, "btn_going"), `rsvp:${trainingId}:going`)
-    .text(t(lang, "btn_not_going"), `rsvp:${trainingId}:not_going`);
+    .text(t(lang, "btn_not_going"), `rsvp:${trainingId}:not_going`)
+    .row()
+    .text(t(lang, "btn_later"), `rsvp:${trainingId}:later`);
 }
 
-// Собирает текст сообщения с опросом (на языке команды) и кнопки из данных в базе
+// Собирает текст сообщения с опросом (на языке команды) и кнопки из данных в базе.
+// «Идут» — первые N по порядку ответов (N = число мест), остальные желающие в очереди.
 export async function render(trainingId: string | number) {
   const [row] = await sql`
     select tr.starts_at, tr.place, tr.needed_players,
@@ -18,15 +21,17 @@ export async function render(trainingId: string | number) {
     from trainings tr join teams tm on tm.id = tr.team_id
     where tr.id = ${trainingId}`;
   const lang = row.language as Lang;
+  const cap = row.needed_players ? Number(row.needed_players) : 0; // 0 = без ограничения
 
   const going = await sql`
     select u.first_name
     from rsvps r join users u on u.id = r.user_id
     where r.training_id = ${trainingId} and r.status = 'going'
-    order by r.updated_at`;
-  const [{ not_going }] = await sql`
-    select count(*)::int as not_going from rsvps
-    where training_id = ${trainingId} and status = 'not_going'`;
+    order by r.going_at nulls last, r.updated_at`;
+  const [{ not_going, later }] = await sql`
+    select (count(*) filter (where status = 'not_going'))::int as not_going,
+           (count(*) filter (where status = 'later'))::int as later
+    from rsvps where training_id = ${trainingId}`;
   const [{ no_answer }] = await sql`
     select count(*)::int as no_answer
     from memberships m
@@ -34,6 +39,9 @@ export async function render(trainingId: string | number) {
       and not exists (
         select 1 from rsvps r where r.training_id = ${trainingId} and r.user_id = m.user_id
       )`;
+
+  const confirmed = cap ? going.slice(0, cap) : going;
+  const queue = cap ? going.slice(cap) : [];
 
   const when = new Intl.DateTimeFormat(LOCALES[lang], {
     weekday: "short",
@@ -44,7 +52,7 @@ export async function render(trainingId: string | number) {
     timeZone: row.timezone,
   }).format(row.starts_at);
 
-  const count = row.needed_players ? `${going.length}/${row.needed_players}` : `${going.length}`;
+  const count = cap ? `${confirmed.length}/${cap}` : `${confirmed.length}`;
 
   const lines: (string | null)[] = [
     t(lang, "poll_title", { team: row.team_name }),
@@ -52,9 +60,14 @@ export async function render(trainingId: string | number) {
     row.place ? `📍 ${row.place}` : null,
     "",
     t(lang, "poll_going", { count }),
-    ...going.map((g, i) => `${i + 1}. ${g.first_name}`),
+    ...confirmed.map((g, i) => `${i + 1}. ${g.first_name}`),
+    queue.length > 0 ? "" : null,
+    queue.length > 0 ? t(lang, "poll_waitlist", { n: queue.length }) : null,
+    ...queue.map((g, i) => `${i + 1}. ${g.first_name}`),
     "",
+    cap ? t(lang, "poll_free", { n: Math.max(0, cap - confirmed.length) }) : null,
     t(lang, "poll_not_going", { n: not_going }),
+    later > 0 ? t(lang, "poll_later", { n: later }) : null,
     t(lang, "poll_no_answer", { n: no_answer }),
   ];
 
@@ -223,53 +236,5 @@ export function registerTrainings(bot: Bot) {
       console.error("editMessageText:", e);
     }
     return ctx.answerCallbackQuery();
-  });
-
-  // Нажатие кнопок «Иду» / «Не иду»; ответы-подсказки — на языке нажавшего
-  bot.callbackQuery(/^rsvp:(\d+):(going|not_going)$/, async (ctx) => {
-    const match = ctx.match as RegExpMatchArray;
-    const trainingId = match[1];
-    const status = match[2];
-    const user = await ensureUser(ctx);
-
-    const [tr] = await sql`select team_id, starts_at, cancelled_at from trainings where id = ${trainingId}`;
-    if (!tr) return ctx.answerCallbackQuery({ text: t(user.lang, "cb_not_found") });
-    if (tr.cancelled_at) return ctx.answerCallbackQuery({ text: t(user.lang, "cb_cancelled") });
-    if (tr.starts_at < new Date()) {
-      return ctx.answerCallbackQuery({ text: t(user.lang, "cb_past") });
-    }
-
-    const [member] = await sql`
-      select 1 as ok from memberships where team_id = ${tr.team_id} and user_id = ${user.id}`;
-    if (!member) {
-      return ctx.answerCallbackQuery({ text: t(user.lang, "cb_not_member"), show_alert: true });
-    }
-
-    const [current] = await sql`
-      select status from rsvps where training_id = ${trainingId} and user_id = ${user.id}`;
-    if (current && current.status === status) {
-      return ctx.answerCallbackQuery({ text: t(user.lang, "cb_already") });
-    }
-
-    await sql.begin(async (tx) => {
-      await tx`
-        insert into rsvps (training_id, user_id, status)
-        values (${trainingId}, ${user.id}, ${status})
-        on conflict (training_id, user_id)
-        do update set status = excluded.status, updated_at = now()`;
-      await tx`
-        insert into rsvp_events (training_id, user_id, status)
-        values (${trainingId}, ${user.id}, ${status})`;
-    });
-
-    const { text, keyboard } = await render(trainingId);
-    try {
-      await ctx.editMessageText(text, { reply_markup: keyboard });
-    } catch (e) {
-      console.error("editMessageText:", e);
-    }
-    await ctx.answerCallbackQuery({
-      text: t(user.lang, status === "going" ? "cb_saved_going" : "cb_saved_not_going"),
-    });
   });
 }

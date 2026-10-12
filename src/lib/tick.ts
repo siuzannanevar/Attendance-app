@@ -12,7 +12,7 @@ const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replac
 //  B) публикует опросы, у которых наступило время;
 //  C) напоминает тем, кто не ответил, и предупреждает организатора о недоборе.
 export async function runTick(api: Api, onlyTeamId?: string | number) {
-  const stats = { created: 0, published: 0, reminded: 0, alerts: 0, errors: 0 };
+  const stats = { created: 0, published: 0, reminded: 0, alerts: 0, laters: 0, errors: 0 };
   const teamFilter = onlyTeamId ? sql`and tm.id = ${onlyTeamId}` : sql``;
 
   // ---------- A. Создать тренировки по расписанию
@@ -95,7 +95,9 @@ export async function runTick(api: Api, onlyTeamId?: string | number) {
         from memberships m join users u on u.id = m.user_id
         where m.team_id = ${row.team_id} and m.plays
           and not exists (
-            select 1 from rsvps r where r.training_id = ${row.id} and r.user_id = m.user_id
+            select 1 from rsvps r
+            where r.training_id = ${row.id} and r.user_id = m.user_id
+              and (r.status in ('going', 'not_going') or r.remind_at > now())
           )
         order by u.first_name`;
       const [{ going }] = await sql`
@@ -149,6 +151,37 @@ export async function runTick(api: Api, onlyTeamId?: string | number) {
       }
     } catch (e) {
       console.error("tick remind:", e);
+      stats.errors++;
+    }
+  }
+
+  // ---------- D. «Отвечу позже»: через час снова присылаем опрос тем, кто просил напомнить
+  const laters = await sql`
+    select r.training_id, r.user_id, u.telegram_id, u.language, tm.language as team_language
+    from rsvps r
+    join users u on u.id = r.user_id
+    join trainings tr on tr.id = r.training_id
+    join teams tm on tm.id = tr.team_id
+    where r.status = 'later' and r.remind_at is not null and r.remind_at <= now()
+      and tr.starts_at > now() and tr.cancelled_at is null
+      ${teamFilter}`;
+
+  for (const l of laters) {
+    const [claim] = await sql`
+      update rsvps set remind_at = null
+      where training_id = ${l.training_id} and user_id = ${l.user_id}
+        and remind_at is not null and remind_at <= now()
+      returning 1 as ok`;
+    if (!claim) continue;
+    try {
+      const { text, keyboard } = await render(l.training_id);
+      const lang: Lang = isLang(l.language) ? l.language : (l.team_language as Lang);
+      await api.sendMessage(l.telegram_id, t(lang, "later_reminder") + "\n\n" + text, {
+        reply_markup: keyboard,
+      });
+      stats.laters++;
+    } catch (e) {
+      console.error("tick later:", e);
       stats.errors++;
     }
   }

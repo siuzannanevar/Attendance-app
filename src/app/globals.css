@@ -274,3 +274,9 @@ details.card[open] > summary { margin-bottom: 14px; }
 }
 .row-actions { margin: 0 0 0 auto; }
 @media (max-width: 480px) { .form-row { grid-template-columns: 1fr; } }
+
+/* ---------- очередь и «отвечу позже» ---------- */
+.chip-amber { background: var(--amber-bg); color: var(--amber); }
+.name-tag-queue { background: var(--amber-bg); color: var(--amber); }
+.btn-later-active { background: var(--amber-bg); border-color: var(--amber); color: var(--amber); }
+.btn-later-active:hover { background: var(--amber-bg); }
