@@ -6,12 +6,15 @@ import { getCurrentUser, getLang } from "@/lib/session";
 import { wt, type WebKey } from "@/lib/web-i18n";
 import { weekdayShort } from "@/bot/format";
 import { LOCALES, type Lang } from "@/bot/i18n";
+import { loadSeatsMany, splitSeats, type Seat } from "@/lib/seats";
 import {
+  addGuestsAction,
   addScheduleAction,
   answerAction,
   cancelTrainingAction,
   createTrainingAction,
   deleteSlotAction,
+  removeGuestAction,
   removeMemberAction,
   setOrganizerAction,
   togglePlaysAction,
@@ -49,6 +52,10 @@ const NOTICES: Record<string, { key: WebKey; ok: boolean }> = {
   plays_off: { key: "n_plays_off", ok: true },
   owner_only: { key: "n_owner_only", ok: false },
   self: { key: "n_self", ok: false },
+  guests_in: { key: "n_guests_in", ok: true },
+  guests_queue: { key: "n_guests_queue", ok: true },
+  guest_removed: { key: "n_guest_removed", ok: true },
+  guests_many: { key: "n_guests_many", ok: false },
 };
 
 // Части даты для «карточки-календаря»
@@ -105,19 +112,8 @@ export default async function TeamPage(props: {
     order by tr.starts_at
     limit 10`;
 
-  // Желающие пойти по порядку ответов (первые N получают места, остальные в очереди)
-  const goingList: Record<string, { id: string; name: string }[]> = {};
-  if (trainings.length > 0) {
-    const ids = trainings.map((x) => x.id);
-    const rows = await sql`
-      select r.training_id, r.user_id, u.first_name
-      from rsvps r join users u on u.id = r.user_id
-      where r.training_id in ${sql(ids)} and r.status = 'going'
-      order by r.going_at nulls last, r.updated_at`;
-    for (const r of rows) {
-      (goingList[r.training_id] ||= []).push({ id: String(r.user_id), name: r.first_name });
-    }
-  }
+  // Места на каждую тренировку: участники и их гости по порядку нажатий
+  const seatsByTraining = await loadSeatsMany(trainings.map((x) => String(x.id)));
 
   const members = isAdmin
     ? await sql`
@@ -197,12 +193,16 @@ export default async function TeamPage(props: {
               {trainings.map((tr) => {
                 const p = dateParts(tr.starts_at, team.timezone, lang);
                 const cap = tr.needed_players ? Number(tr.needed_players) : 0;
-                const list = goingList[tr.id] ?? [];
-                const confirmed = cap ? list.slice(0, cap) : list;
-                const queue = cap ? list.slice(cap) : [];
-                const myIdx = list.findIndex((x) => x.id === String(user.id));
+                const seats = seatsByTraining[String(tr.id)] ?? [];
+                const { confirmed, queue } = splitSeats(seats, cap);
+                const myIdx = seats.findIndex((s) => s.key === `h:${user.id}`);
                 const myQueuePos = cap && myIdx >= cap ? myIdx - cap + 1 : 0;
+                const myGuests = seats.filter((s) => s.hostId === String(user.id) && s.guestId);
                 const pct = cap ? Math.min(100, Math.round((confirmed.length / cap) * 100)) : 0;
+                const seatLabel = (s: Seat) =>
+                  s.guestId
+                    ? wt(lang, "seat_guest", { name: s.name || wt(lang, "guest_unnamed"), host: s.hostName })
+                    : s.name;
                 const myLabel =
                   tr.my_status === "going"
                     ? myQueuePos > 0
@@ -259,18 +259,18 @@ export default async function TeamPage(props: {
                       </div>
                       {confirmed.length > 0 && (
                         <div className="names">
-                          {confirmed.map((x, i) => (
-                            <span key={i} className="name-tag">
-                              {x.name}
+                          {confirmed.map((s) => (
+                            <span key={s.key} className={s.guestId ? "name-tag name-tag-guest" : "name-tag"}>
+                              {seatLabel(s)}
                             </span>
                           ))}
                         </div>
                       )}
                       {queue.length > 0 && (
                         <div className="names">
-                          {queue.map((x, i) => (
-                            <span key={i} className="name-tag name-tag-queue">
-                              {i + 1}. {x.name}
+                          {queue.map((s, i) => (
+                            <span key={s.key} className="name-tag name-tag-queue">
+                              {i + 1}. {seatLabel(s)}
                             </span>
                           ))}
                         </div>
@@ -307,6 +307,43 @@ export default async function TeamPage(props: {
                           {wt(lang, "ans_later_btn")}
                         </button>
                       </form>
+
+                      <details className="inline-details">
+                        <summary className="btn">{wt(lang, "btn_guests")}</summary>
+                        <form action={addGuestsAction} className="form guests-form">
+                          <input type="hidden" name="team" value={team.id} />
+                          <input type="hidden" name="training" value={tr.id} />
+                          <div className="form-row">
+                            <label className="field">
+                              {wt(lang, "f_guests_count")}
+                              <input type="number" name="count" min={1} max={5} defaultValue={1} required />
+                            </label>
+                            <label className="field">
+                              {wt(lang, "f_guest_names")}
+                              <input type="text" name="names" maxLength={200} />
+                            </label>
+                          </div>
+                          <button type="submit" className="btn btn-primary">
+                            {wt(lang, "f_guests_add")}
+                          </button>
+                        </form>
+                      </details>
+
+                      {myGuests.length > 0 && (
+                        <div className="guests">
+                          <span className="muted small">{wt(lang, "your_guests")}:</span>
+                          {myGuests.map((g) => (
+                            <form key={g.key} action={removeGuestAction} className="inline-form">
+                              <input type="hidden" name="team" value={team.id} />
+                              <input type="hidden" name="training" value={tr.id} />
+                              <input type="hidden" name="guest" value={g.guestId ?? ""} />
+                              <button type="submit" className="name-tag guest-tag">
+                                {g.name || wt(lang, "guest_unnamed")} ✕
+                              </button>
+                            </form>
+                          ))}
+                        </div>
+                      )}
 
                       {isAdmin && (
                         <form action={cancelTrainingAction}>

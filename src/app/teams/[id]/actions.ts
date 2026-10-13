@@ -8,7 +8,8 @@ import { getCurrentUser } from "@/lib/session";
 import { publishTraining } from "@/bot/trainings";
 import { runAction } from "@/bot/schedule";
 import { isLang, type Lang } from "@/bot/i18n";
-import { applyAnswer, cancelTraining } from "@/lib/rsvp";
+import { addGuests, applyAnswer, cancelTraining, removeGuest } from "@/lib/rsvp";
+import { parseGuestNames } from "@/lib/seats";
 import { runTick } from "@/lib/tick";
 import { removeMember, setOrganizer, togglePlays } from "@/lib/members";
 
@@ -187,4 +188,31 @@ export async function togglePlaysAction(formData: FormData): Promise<void> {
   const { user } = await requireMember(teamId, true);
   const plays = await togglePlays(bot.api, teamId, user.id);
   done(teamId, plays === null ? "err" : plays ? "plays_on" : "plays_off");
+}
+
+// ---------- «Иду с кем-то»: добавить гостей / убрать гостя
+export async function addGuestsAction(formData: FormData): Promise<void> {
+  const teamId = String(formData.get("team") ?? "");
+  const trainingId = String(formData.get("training") ?? "");
+  const { user } = await requireMember(teamId, false);
+  if (!/^\d+$/.test(trainingId)) done(teamId, "err");
+
+  const count = Math.max(1, Math.min(5, Number(formData.get("count") ?? 1) || 1));
+  const names = parseGuestNames(String(formData.get("names") ?? ""), count);
+
+  const res = await addGuests(bot.api, user.id, trainingId, names, teamId);
+  if (res.result === "ok") done(teamId, res.guestsQueued ? "guests_queue" : "guests_in");
+  if (res.result === "toomany") done(teamId, "guests_many");
+  done(teamId, res.result === "cancelled" ? "was_cancelled" : res.result === "past" ? "past" : "err");
+}
+
+export async function removeGuestAction(formData: FormData): Promise<void> {
+  const teamId = String(formData.get("team") ?? "");
+  const trainingId = String(formData.get("training") ?? "");
+  const guestId = String(formData.get("guest") ?? "");
+  const { user } = await requireMember(teamId, false);
+  if (!/^\d+$/.test(trainingId) || !/^\d+$/.test(guestId)) done(teamId, "err");
+
+  const res = await removeGuest(bot.api, user.id, trainingId, guestId, teamId);
+  done(teamId, res.result === "ok" ? "guest_removed" : "err");
 }

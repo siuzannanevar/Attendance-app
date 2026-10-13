@@ -87,6 +87,17 @@ const ru = {
   n_plays_off: "Вас больше не считают среди неответивших.",
   n_owner_only: "Менять роль и удалять организаторов может только создатель команды.",
   n_self: "Себя удалить нельзя. Чтобы выйти из команды, используйте /leave в боте.",
+  btn_guests: "👥 Иду с кем-то",
+  f_guests_count: "Сколько гостей",
+  f_guest_names: "Имена (через запятую)",
+  f_guests_add: "Записать",
+  your_guests: "Ваши гости",
+  guest_unnamed: "Гость",
+  seat_guest: "{name} · гость {host}",
+  n_guests_in: "Записано: вы и ваши гости идёте ✅",
+  n_guests_queue: "Записано, но не на всех гостей хватило мест: часть в очереди.",
+  n_guest_removed: "Гость удалён.",
+  n_guests_many: "Слишком много гостей: максимум 10 на тренировку.",
 };
 
 const en: typeof ru = {
@@ -175,6 +186,17 @@ const en: typeof ru = {
   n_plays_off: "You are no longer counted among those who haven't answered.",
   n_owner_only: "Only the team's creator can change or remove organizers.",
   n_self: "You can't remove yourself. To leave the team, use /leave in the bot.",
+  btn_guests: "👥 I'm bringing someone",
+  f_guests_count: "How many guests",
+  f_guest_names: "Names (comma-separated)",
+  f_guests_add: "Add",
+  your_guests: "Your guests",
+  guest_unnamed: "Guest",
+  seat_guest: "{name} · guest of {host}",
+  n_guests_in: "Saved: you and your guests are in ✅",
+  n_guests_queue: "Saved, but there weren't enough spots for all guests: some are on the waiting list.",
+  n_guest_removed: "Guest removed.",
+  n_guests_many: "Too many guests: 10 per training at most.",
 };
 
 const et: typeof ru = {
@@ -263,6 +285,17 @@ const et: typeof ru = {
   n_plays_off: "Sind ei loeta enam vastamata jätnute hulka.",
   n_owner_only: "Organisaatorite rolli muuta ja neid eemaldada saab ainult meeskonna looja.",
   n_self: "Iseennast ei saa eemaldada. Meeskonnast lahkumiseks kasuta botis käsku /leave.",
+  btn_guests: "👥 Tulen kellegagi",
+  f_guests_count: "Mitu külalist",
+  f_guest_names: "Nimed (komadega)",
+  f_guests_add: "Salvesta",
+  your_guests: "Sinu külalised",
+  guest_unnamed: "Külaline",
+  seat_guest: "{name} · {host} külaline",
+  n_guests_in: "Salvestatud: sina ja sinu külalised tulete ✅",
+  n_guests_queue: "Salvestatud, kuid kõigile külalistele ei jätkunud kohti: osa on ootejärjekorras.",
+  n_guest_removed: "Külaline eemaldatud.",
+  n_guests_many: "Liiga palju külalisi: maksimaalselt 10 treeningu kohta.",
 };
 
 const messages: Record<Lang, typeof ru> = { ru, en, et };

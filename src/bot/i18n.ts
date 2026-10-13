@@ -174,6 +174,19 @@ const ru = {
   org_promoted: "Из очереди занял место: {names}.",
   later_reminder: "⏰ Вы просили напомнить про тренировку. Вот что сейчас:",
 
+  btn_guests: "👥 Иду с кем-то",
+  btn_no_names: "Без имён",
+  guest_unnamed: "Гость",
+  poll_guest: "{name} (гость: {host})",
+  cb_guests_dm: "Продолжим в личных сообщениях 👥",
+  cb_guests_nodm: "Откройте бота в личных сообщениях, нажмите Старт и повторите.",
+  guests_ask: "Сколько человек вы приведёте с собой на тренировку {when}?",
+  guests_names_ask:
+    "Напишите имена гостей через запятую (например: Аня, Борис) или нажмите «Без имён».",
+  guests_done: "Готово. Гостей: {n}. Мест подтверждено: {in}, в очереди: {queued}.",
+  guests_toomany: "Слишком много гостей: максимум 10 на тренировку.",
+  promoted_guest_dm: "🎉 Освободилось место для вашего гостя {name}: тренировка {when} ({team}).",
+
   lang_choose_user: "Language / Keel / Язык:",
   lang_choose_group: "Group language / Grupi keel / Язык группы:",
   lang_saved_user: "Язык: {language}.",
@@ -337,6 +350,19 @@ const en: typeof ru = {
   org_promoted: "Moved up from the waiting list: {names}.",
   later_reminder: "⏰ You asked for a reminder about the training. Here is the current status:",
 
+  btn_guests: "👥 I'm bringing someone",
+  btn_no_names: "No names",
+  guest_unnamed: "Guest",
+  poll_guest: "{name} (guest of {host})",
+  cb_guests_dm: "Let's continue in a private message 👥",
+  cb_guests_nodm: "Open the bot in a private chat, press Start and try again.",
+  guests_ask: "How many people are you bringing to the training on {when}?",
+  guests_names_ask:
+    "Send the guests' names separated by commas (e.g. Anna, Boris) or press “No names”.",
+  guests_done: "Done. Guests: {n}. Spots confirmed: {in}, on the waiting list: {queued}.",
+  guests_toomany: "Too many guests: 10 per training at most.",
+  promoted_guest_dm: "🎉 A spot opened up for your guest {name}: training on {when} ({team}).",
+
   lang_choose_user: "Language / Keel / Язык:",
   lang_choose_group: "Group language / Grupi keel / Язык группы:",
   lang_saved_user: "Language: {language}.",
@@ -499,6 +525,19 @@ const et: typeof ru = {
   org_free: "Vabu kohti: {free}.",
   org_promoted: "Ootejärjekorrast sai koha: {names}.",
   later_reminder: "⏰ Palusid treeningust meelde tuletada. Praegune seis:",
+
+  btn_guests: "👥 Tulen kellegagi",
+  btn_no_names: "Ilma nimedeta",
+  guest_unnamed: "Külaline",
+  poll_guest: "{name} (külaline: {host})",
+  cb_guests_dm: "Jätkame privaatsõnumites 👥",
+  cb_guests_nodm: "Ava bot privaatvestluses, vajuta Start ja proovi uuesti.",
+  guests_ask: "Mitu inimest tood treeningule {when} kaasa?",
+  guests_names_ask:
+    "Saada külaliste nimed komadega eraldatult (nt Anna, Boris) või vajuta „Ilma nimedeta”.",
+  guests_done: "Valmis. Külalisi: {n}. Kohti kinnitatud: {in}, ootejärjekorras: {queued}.",
+  guests_toomany: "Liiga palju külalisi: maksimaalselt 10 treeningu kohta.",
+  promoted_guest_dm: "🎉 Vabanes koht sinu külalisele {name}: treening {when} ({team}).",
 
   lang_choose_user: "Language / Keel / Язык:",
   lang_choose_group: "Group language / Grupi keel / Язык группы:",

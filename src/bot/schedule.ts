@@ -5,6 +5,7 @@ import { ensureUser } from "./helpers";
 import { t, type Lang } from "./i18n";
 import { formatWhen, parseWeekdays, weekdayShort } from "./format";
 import { runTick } from "@/lib/tick";
+import { loadSeats } from "@/lib/seats";
 
 type Row = Record<string, any>;
 
@@ -238,9 +239,7 @@ export function registerSchedule(bot: Bot) {
       return ctx.answerCallbackQuery({ text: t(user.lang, "not_organizer"), show_alert: true });
     }
 
-    const [{ going }] = await sql`
-      select count(*)::int as going from rsvps
-      where training_id = ${trainingId} and status = 'going'`;
+    const going = (await loadSeats(trainingId)).length; // занято мест: участники и гости
     const missing = Math.max(0, Number(tr.needed_players ?? 0) - going);
     if (missing === 0) return ctx.answerCallbackQuery({ text: t(user.lang, "call_enough") });
 

@@ -4,6 +4,7 @@ import { sql } from "@/lib/db";
 import { render } from "@/bot/trainings";
 import { t, isLang, type Lang } from "@/bot/i18n";
 import { formatWhen } from "@/bot/format";
+import { loadSeats } from "@/lib/seats";
 
 const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
@@ -100,9 +101,7 @@ export async function runTick(api: Api, onlyTeamId?: string | number) {
               and (r.status in ('going', 'not_going') or r.remind_at > now())
           )
         order by u.first_name`;
-      const [{ going }] = await sql`
-        select count(*)::int as going from rsvps
-        where training_id = ${row.id} and status = 'going'`;
+      const going = (await loadSeats(row.id)).length; // занято мест: участники и гости
 
       // 1) Напоминание в группу с «упоминаниями» (приходит как заметное уведомление)
       if (unanswered.length > 0 && row.chat_id) {

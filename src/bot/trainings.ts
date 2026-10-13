@@ -3,17 +3,19 @@ import type { Api, Bot } from "grammy";
 import { sql } from "@/lib/db";
 import { ensureUser, tryDelete } from "./helpers";
 import { t, LOCALES, type Lang } from "./i18n";
+import { loadSeats, splitSeats, type Seat } from "@/lib/seats";
 
 function makeKeyboard(trainingId: string | number, lang: Lang) {
   return new InlineKeyboard()
     .text(t(lang, "btn_going"), `rsvp:${trainingId}:going`)
     .text(t(lang, "btn_not_going"), `rsvp:${trainingId}:not_going`)
     .row()
+    .text(t(lang, "btn_guests"), `rsvp:${trainingId}:guests`)
     .text(t(lang, "btn_later"), `rsvp:${trainingId}:later`);
 }
 
 // Собирает текст сообщения с опросом (на языке команды) и кнопки из данных в базе.
-// «Идут» — первые N по порядку ответов (N = число мест), остальные желающие в очереди.
+// «Идут» — первые N мест по порядку нажатий (участники и их гости), остальные в очереди.
 export async function render(trainingId: string | number) {
   const [row] = await sql`
     select tr.starts_at, tr.place, tr.needed_players,
@@ -23,11 +25,9 @@ export async function render(trainingId: string | number) {
   const lang = row.language as Lang;
   const cap = row.needed_players ? Number(row.needed_players) : 0; // 0 = без ограничения
 
-  const going = await sql`
-    select u.first_name
-    from rsvps r join users u on u.id = r.user_id
-    where r.training_id = ${trainingId} and r.status = 'going'
-    order by r.going_at nulls last, r.updated_at`;
+  const seats = await loadSeats(trainingId);
+  const { confirmed, queue } = splitSeats(seats, cap);
+
   const [{ not_going, later }] = await sql`
     select (count(*) filter (where status = 'not_going'))::int as not_going,
            (count(*) filter (where status = 'later'))::int as later
@@ -40,9 +40,6 @@ export async function render(trainingId: string | number) {
         select 1 from rsvps r where r.training_id = ${trainingId} and r.user_id = m.user_id
       )`;
 
-  const confirmed = cap ? going.slice(0, cap) : going;
-  const queue = cap ? going.slice(cap) : [];
-
   const when = new Intl.DateTimeFormat(LOCALES[lang], {
     weekday: "short",
     day: "2-digit",
@@ -52,6 +49,10 @@ export async function render(trainingId: string | number) {
     timeZone: row.timezone,
   }).format(row.starts_at);
 
+  const label = (s: Seat) =>
+    s.guestId
+      ? t(lang, "poll_guest", { name: s.name || t(lang, "guest_unnamed"), host: s.hostName })
+      : s.name;
   const count = cap ? `${confirmed.length}/${cap}` : `${confirmed.length}`;
 
   const lines: (string | null)[] = [
@@ -60,10 +61,10 @@ export async function render(trainingId: string | number) {
     row.place ? `📍 ${row.place}` : null,
     "",
     t(lang, "poll_going", { count }),
-    ...confirmed.map((g, i) => `${i + 1}. ${g.first_name}`),
+    ...confirmed.map((s, i) => `${i + 1}. ${label(s)}`),
     queue.length > 0 ? "" : null,
     queue.length > 0 ? t(lang, "poll_waitlist", { n: queue.length }) : null,
-    ...queue.map((g, i) => `${i + 1}. ${g.first_name}`),
+    ...queue.map((s, i) => `${i + 1}. ${label(s)}`),
     "",
     cap ? t(lang, "poll_free", { n: Math.max(0, cap - confirmed.length) }) : null,
     t(lang, "poll_not_going", { n: not_going }),
