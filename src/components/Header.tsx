@@ -2,12 +2,11 @@ import { wt } from "@/lib/web-i18n";
 import type { Lang } from "@/bot/i18n";
 
 const LANGS: [Lang, string][] = [
-  ["et", "EE"],
+  ["et", "ET"],
   ["ru", "RU"],
   ["en", "EN"],
 ];
 
-// Шапка: название, переключатель языка, имя пользователя и «Выйти»
 export default function Header({
   lang,
   next,
@@ -21,10 +20,9 @@ export default function Header({
     <header className="topbar">
       <div className="topbar-inner">
         <a href="/" className="brand">
-          <span className="brand-icon">📋</span>
           {wt(lang, "app_title")}
         </a>
-        <div className="topbar-right">
+        <nav className="topbar-right">
           <div className="lang">
             {LANGS.map(([l, label]) => (
               <a
@@ -39,12 +37,12 @@ export default function Header({
           {userName && (
             <>
               <span className="user">{userName}</span>
-              <a href="/api/auth/logout" className="btn btn-ghost">
+              <a href="/api/auth/logout" className="link">
                 {wt(lang, "logout")}
               </a>
             </>
           )}
-        </div>
+        </nav>
       </div>
     </header>
   );

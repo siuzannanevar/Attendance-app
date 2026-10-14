@@ -57,8 +57,8 @@ export async function render(trainingId: string | number) {
 
   const lines: (string | null)[] = [
     t(lang, "poll_title", { team: row.team_name }),
-    `🕒 ${when}`,
-    row.place ? `📍 ${row.place}` : null,
+    when,
+    row.place ? row.place : null,
     "",
     t(lang, "poll_going", { count }),
     ...confirmed.map((s, i) => `${i + 1}. ${label(s)}`),

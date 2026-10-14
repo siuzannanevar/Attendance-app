@@ -22,17 +22,16 @@ export default async function Home({
       <Header lang={lang} next="/" />
       <main className="auth">
         <div className="auth-card">
-          <div className="auth-icon">📋</div>
           <h1>{wt(lang, "login_title")}</h1>
           <p className="muted">{wt(lang, "login_hint")}</p>
-          {error && <p className="alert">{wt(lang, "login_failed")}</p>}
+          {error && <p className="notice notice-err">{wt(lang, "login_failed")}</p>}
           <a
             href="https://t.me/attendance_team2026_bot?start=login"
             className="btn btn-primary btn-lg"
           >
-            ✈️ {wt(lang, "login_bot_button")}
+            {wt(lang, "login_bot_button")}
           </a>
-          <p className="muted small">{wt(lang, "login_bot_hint")}</p>
+          <p className="faint small">{wt(lang, "login_bot_hint")}</p>
         </div>
       </main>
     </>

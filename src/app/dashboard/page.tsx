@@ -26,25 +26,22 @@ export default async function Dashboard() {
         {teams.length === 0 ? (
           <div className="card empty">{wt(lang, "no_teams")}</div>
         ) : (
-          <div className="list">
+          <div className="group">
             {teams.map((tm) => (
-              <Link key={tm.id} href={`/teams/${tm.id}`} className="card card-link">
-                <div className="avatar">{String(tm.name).charAt(0).toUpperCase()}</div>
-                <div className="team-info">
-                  <div className="team-name">{tm.name}</div>
-                  <span className={tm.role === "admin" ? "badge badge-admin" : "badge"}>
-                    {tm.role === "admin" ? wt(lang, "role_admin") : wt(lang, "role_player")}
-                  </span>
-                </div>
+              <Link key={tm.id} href={`/teams/${tm.id}`} className="group-row link-row">
+                <span className="row-title">{tm.name}</span>
+                <span className="row-meta">
+                  {tm.role === "admin" ? wt(lang, "role_admin") : wt(lang, "role_player")}
+                </span>
                 <span className="chev">›</span>
               </Link>
             ))}
           </div>
         )}
-        <p className="muted small" style={{ marginTop: 20 }}>
+        <p className="faint small" style={{ marginTop: 20 }}>
           {wt(lang, "bot_hint")}
         </p>
       </main>
     </>
   );
-} 
+}

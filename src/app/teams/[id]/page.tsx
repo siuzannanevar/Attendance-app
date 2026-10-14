@@ -137,26 +137,20 @@ export default async function TeamPage(props: {
         </Link>
 
         <div className="team-head">
-          <h1 className="page-title" style={{ marginBottom: 0 }}>
-            {team.name}
-          </h1>
-          <span className={isAdmin ? "badge badge-admin" : "badge"}>
-            {isAdmin ? wt(lang, "role_admin") : wt(lang, "role_player")}
-          </span>
+          <h1 className="page-title">{team.name}</h1>
+          <span className="role">{isAdmin ? wt(lang, "role_admin") : wt(lang, "role_player")}</span>
         </div>
 
         {notice && (
-          <div className={notice.ok ? "notice notice-ok" : "notice notice-err"} style={{ marginTop: 14 }}>
-            {wt(lang, notice.key)}
-          </div>
+          <div className={notice.ok ? "notice" : "notice notice-err"}>{wt(lang, notice.key)}</div>
         )}
 
         <section className="section">
           <h2 className="section-title">{wt(lang, "upcoming")}</h2>
 
           {isAdmin && (
-            <details className="card" style={{ marginBottom: 10 }}>
-              <summary>{wt(lang, "new_training")}</summary>
+            <details className="panel">
+              <summary className="btn">{wt(lang, "new_training")}</summary>
               <form action={createTrainingAction} className="form">
                 <input type="hidden" name="team" value={team.id} />
                 <div className="form-row">
@@ -179,9 +173,11 @@ export default async function TeamPage(props: {
                     <input type="text" name="place" maxLength={100} />
                   </label>
                 </div>
-                <button type="submit" className="btn btn-primary">
-                  {wt(lang, "f_create")}
-                </button>
+                <div>
+                  <button type="submit" className="btn btn-primary">
+                    {wt(lang, "f_create")}
+                  </button>
+                </div>
               </form>
             </details>
           )}
@@ -189,7 +185,7 @@ export default async function TeamPage(props: {
           {trainings.length === 0 ? (
             <div className="card empty">{wt(lang, "no_upcoming")}</div>
           ) : (
-            <div className="list">
+            <div className="stack">
               {trainings.map((tr) => {
                 const p = dateParts(tr.starts_at, team.timezone, lang);
                 const cap = tr.needed_players ? Number(tr.needed_players) : 0;
@@ -215,146 +211,155 @@ export default async function TeamPage(props: {
                         : wt(lang, "ans_none");
                 return (
                   <article key={tr.id} className="card training">
-                    <div className="training-date">
-                      <div className="td-weekday">{p.weekday}</div>
-                      <div className="td-day">{p.day}</div>
-                      <div className="td-month">{p.month}</div>
-                    </div>
-                    <div className="training-body">
-                      <div className="training-head">
-                        <span className="training-time">{p.time}</span>
-                        {tr.place && <span className="muted">📍 {tr.place}</span>}
+                    <div className="training-top">
+                      <div>
+                        <div className="training-date">
+                          {p.weekday}, {p.day} {p.month}
+                        </div>
+                        <div className="training-time">{p.time}</div>
+                        {tr.place && <div className="muted">{tr.place}</div>}
                       </div>
+                      <div className="training-count">
+                        <div>
+                          <span className="count-num">{confirmed.length}</span>
+                          {cap ? <span className="count-of">/{cap}</span> : null}
+                        </div>
+                        <div className="count-label">{wt(lang, "going")}</div>
+                      </div>
+                    </div>
+
+                    {cap ? (
+                      <div className="progress">
+                        <div className="progress-bar" style={{ width: `${pct}%` }} />
+                      </div>
+                    ) : null}
+
+                    <dl className="stats">
                       {cap ? (
-                        <div className="progress">
-                          <div className="progress-bar" style={{ width: `${pct}%` }} />
+                        <div className="stat">
+                          <dt>{wt(lang, "free_spots")}</dt>
+                          <dd>{Math.max(0, cap - confirmed.length)}</dd>
                         </div>
                       ) : null}
-                      <div className="chips">
-                        <span className="chip chip-green">
-                          ✅ {wt(lang, "going")}: {confirmed.length}
-                          {cap ? `/${cap}` : ""}
-                        </span>
-                        {cap ? (
-                          <span className="chip">
-                            🆓 {wt(lang, "free_spots")}: {Math.max(0, cap - confirmed.length)}
-                          </span>
-                        ) : null}
-                        {queue.length > 0 ? (
-                          <span className="chip chip-amber">
-                            🪑 {wt(lang, "waitlist")}: {queue.length}
-                          </span>
-                        ) : null}
-                        <span className="chip chip-red">
-                          ❌ {wt(lang, "not_going")}: {tr.not_going}
-                        </span>
-                        {tr.later > 0 ? (
-                          <span className="chip">
-                            🤔 {wt(lang, "later_label")}: {tr.later}
-                          </span>
-                        ) : null}
-                        <span className="chip">
-                          ⏳ {wt(lang, "no_answer")}: {tr.no_answer}
-                        </span>
+                      {queue.length > 0 ? (
+                        <div className="stat">
+                          <dt>{wt(lang, "waitlist")}</dt>
+                          <dd>{queue.length}</dd>
+                        </div>
+                      ) : null}
+                      <div className="stat">
+                        <dt>{wt(lang, "not_going")}</dt>
+                        <dd>{tr.not_going}</dd>
                       </div>
-                      {confirmed.length > 0 && (
-                        <div className="names">
-                          {confirmed.map((s) => (
-                            <span key={s.key} className={s.guestId ? "name-tag name-tag-guest" : "name-tag"}>
-                              {seatLabel(s)}
-                            </span>
-                          ))}
+                      {tr.later > 0 ? (
+                        <div className="stat">
+                          <dt>{wt(lang, "later_label")}</dt>
+                          <dd>{tr.later}</dd>
                         </div>
-                      )}
-                      {queue.length > 0 && (
-                        <div className="names">
-                          {queue.map((s, i) => (
-                            <span key={s.key} className="name-tag name-tag-queue">
-                              {i + 1}. {seatLabel(s)}
-                            </span>
-                          ))}
-                        </div>
-                      )}
+                      ) : null}
+                      <div className="stat">
+                        <dt>{wt(lang, "no_answer")}</dt>
+                        <dd>{tr.no_answer}</dd>
+                      </div>
+                    </dl>
 
-                      <div className="your">
-                        {wt(lang, "your_answer")}: <b>{myLabel}</b>
+                    {confirmed.length > 0 && (
+                      <div className="roster">
+                        <div className="roster-title">{wt(lang, "going")}</div>
+                        <p>{confirmed.map(seatLabel).join(", ")}</p>
                       </div>
-                      <form action={answerAction} className="answer-buttons">
+                    )}
+                    {queue.length > 0 && (
+                      <div className="roster">
+                        <div className="roster-title">{wt(lang, "waitlist")}</div>
+                        <ol className="queue">
+                          {queue.map((s) => (
+                            <li key={s.key}>{seatLabel(s)}</li>
+                          ))}
+                        </ol>
+                      </div>
+                    )}
+
+                    <div className="your">
+                      {wt(lang, "your_answer")}: <strong>{myLabel}</strong>
+                    </div>
+                    <form action={answerAction} className="answer-buttons">
+                      <input type="hidden" name="team" value={team.id} />
+                      <input type="hidden" name="training" value={tr.id} />
+                      <button
+                        type="submit"
+                        name="status"
+                        value="going"
+                        className={tr.my_status === "going" ? "btn is-yes" : "btn"}
+                      >
+                        {wt(lang, "ans_going")}
+                      </button>
+                      <button
+                        type="submit"
+                        name="status"
+                        value="not_going"
+                        className={tr.my_status === "not_going" ? "btn is-no" : "btn"}
+                      >
+                        {wt(lang, "ans_not_going")}
+                      </button>
+                      <button
+                        type="submit"
+                        name="status"
+                        value="later"
+                        className={tr.my_status === "later" ? "btn is-later" : "btn"}
+                      >
+                        {wt(lang, "ans_later_btn")}
+                      </button>
+                    </form>
+
+                    <details className="panel">
+                      <summary className="btn btn-quiet">{wt(lang, "btn_guests")}</summary>
+                      <form action={addGuestsAction} className="form">
                         <input type="hidden" name="team" value={team.id} />
                         <input type="hidden" name="training" value={tr.id} />
-                        <button
-                          type="submit"
-                          name="status"
-                          value="going"
-                          className={tr.my_status === "going" ? "btn btn-yes-active" : "btn"}
-                        >
-                          ✅ {wt(lang, "ans_going")}
-                        </button>
-                        <button
-                          type="submit"
-                          name="status"
-                          value="not_going"
-                          className={tr.my_status === "not_going" ? "btn btn-no-active" : "btn"}
-                        >
-                          ❌ {wt(lang, "ans_not_going")}
-                        </button>
-                        <button
-                          type="submit"
-                          name="status"
-                          value="later"
-                          className={tr.my_status === "later" ? "btn btn-later-active" : "btn"}
-                        >
-                          {wt(lang, "ans_later_btn")}
-                        </button>
-                      </form>
-
-                      <details className="inline-details">
-                        <summary className="btn">{wt(lang, "btn_guests")}</summary>
-                        <form action={addGuestsAction} className="form guests-form">
-                          <input type="hidden" name="team" value={team.id} />
-                          <input type="hidden" name="training" value={tr.id} />
-                          <div className="form-row">
-                            <label className="field">
-                              {wt(lang, "f_guests_count")}
-                              <input type="number" name="count" min={1} max={5} defaultValue={1} required />
-                            </label>
-                            <label className="field">
-                              {wt(lang, "f_guest_names")}
-                              <input type="text" name="names" maxLength={200} />
-                            </label>
-                          </div>
+                        <div className="form-row">
+                          <label className="field">
+                            {wt(lang, "f_guests_count")}
+                            <input type="number" name="count" min={1} max={5} defaultValue={1} required />
+                          </label>
+                          <label className="field">
+                            {wt(lang, "f_guest_names")}
+                            <input type="text" name="names" maxLength={200} />
+                          </label>
+                        </div>
+                        <div>
                           <button type="submit" className="btn btn-primary">
                             {wt(lang, "f_guests_add")}
                           </button>
-                        </form>
-                      </details>
-
-                      {myGuests.length > 0 && (
-                        <div className="guests">
-                          <span className="muted small">{wt(lang, "your_guests")}:</span>
-                          {myGuests.map((g) => (
-                            <form key={g.key} action={removeGuestAction} className="inline-form">
-                              <input type="hidden" name="team" value={team.id} />
-                              <input type="hidden" name="training" value={tr.id} />
-                              <input type="hidden" name="guest" value={g.guestId ?? ""} />
-                              <button type="submit" className="name-tag guest-tag">
-                                {g.name || wt(lang, "guest_unnamed")} ✕
-                              </button>
-                            </form>
-                          ))}
                         </div>
-                      )}
+                      </form>
+                    </details>
 
-                      {isAdmin && (
-                        <form action={cancelTrainingAction}>
-                          <input type="hidden" name="team" value={team.id} />
-                          <input type="hidden" name="training" value={tr.id} />
-                          <button type="submit" className="btn btn-ghost btn-danger">
-                            {wt(lang, "btn_cancel_training")}
-                          </button>
-                        </form>
-                      )}
-                    </div>
+                    {myGuests.length > 0 && (
+                      <div className="guests">
+                        <span className="muted small">{wt(lang, "your_guests")}:</span>
+                        {myGuests.map((g) => (
+                          <form key={g.key} action={removeGuestAction} className="inline-form">
+                            <input type="hidden" name="team" value={team.id} />
+                            <input type="hidden" name="training" value={tr.id} />
+                            <input type="hidden" name="guest" value={g.guestId ?? ""} />
+                            <button type="submit" className="guest-chip">
+                              {g.name || wt(lang, "guest_unnamed")} &times;
+                            </button>
+                          </form>
+                        ))}
+                      </div>
+                    )}
+
+                    {isAdmin && (
+                      <form action={cancelTrainingAction}>
+                        <input type="hidden" name="team" value={team.id} />
+                        <input type="hidden" name="training" value={tr.id} />
+                        <button type="submit" className="btn-text btn-danger-text">
+                          {wt(lang, "btn_cancel_training")}
+                        </button>
+                      </form>
+                    )}
                   </article>
                 );
               })}
@@ -367,36 +372,40 @@ export default async function TeamPage(props: {
           {slots.length === 0 ? (
             <div className="card empty">{wt(lang, "no_schedule")}</div>
           ) : (
-            <div className="card rows">
+            <div className="group">
               {slots.map((s) => (
-                <div key={s.id} className="row">
-                  <span className="pill">{weekdayShort(lang, s.weekday)}</span>
-                  <span className="slot-time">{String(s.start_time).slice(0, 5)}</span>
-                  {s.needed_players ? <span className="muted">👥 {s.needed_players}</span> : null}
-                  {s.place ? <span className="muted">📍 {s.place}</span> : null}
+                <div key={s.id} className="group-row">
+                  <span className="row-title">
+                    {weekdayShort(lang, s.weekday)} {String(s.start_time).slice(0, 5)}
+                  </span>
+                  <span className="row-meta">
+                    {[s.needed_players ? String(s.needed_players) : null, s.place].filter(Boolean).join(" · ")}
+                  </span>
                   {isAdmin && (
-                    <form action={deleteSlotAction} className="row-actions">
+                    <form action={deleteSlotAction} className="row-action">
                       <input type="hidden" name="team" value={team.id} />
                       <input type="hidden" name="slot" value={s.id} />
-                      <button type="submit" className="btn btn-ghost btn-danger">
-                        🗑 {wt(lang, "btn_delete_slot")}
+                      <button type="submit" className="btn-text btn-danger-text">
+                        {wt(lang, "btn_delete_slot")}
                       </button>
                     </form>
                   )}
                 </div>
               ))}
-              <p className="muted small">
-                {wt(lang, "schedule_timing", {
-                  poll: team.poll_hours_before,
-                  remind: team.remind_hours_before,
-                })}
-              </p>
             </div>
+          )}
+          {slots.length > 0 && (
+            <p className="faint small" style={{ marginTop: 10 }}>
+              {wt(lang, "schedule_timing", {
+                poll: team.poll_hours_before,
+                remind: team.remind_hours_before,
+              })}
+            </p>
           )}
 
           {isAdmin && (
-            <details className="card" style={{ marginTop: 10 }}>
-              <summary>{wt(lang, "add_slot")}</summary>
+            <details className="panel">
+              <summary className="btn">{wt(lang, "add_slot")}</summary>
               <form action={addScheduleAction} className="form">
                 <input type="hidden" name="team" value={team.id} />
                 <div className="field">
@@ -424,46 +433,36 @@ export default async function TeamPage(props: {
                   {wt(lang, "f_place")}
                   <input type="text" name="place" maxLength={100} />
                 </label>
-                <button type="submit" className="btn btn-primary">
-                  {wt(lang, "f_add")}
-                </button>
+                <div>
+                  <button type="submit" className="btn btn-primary">
+                    {wt(lang, "f_add")}
+                  </button>
+                </div>
               </form>
             </details>
           )}
 
           {isAdmin && (
-            <details className="card" style={{ marginTop: 10 }}>
-              <summary>{wt(lang, "timing_title")}</summary>
+            <details className="panel">
+              <summary className="btn">{wt(lang, "timing_title")}</summary>
               <form action={updateTimingAction} className="form">
                 <input type="hidden" name="team" value={team.id} />
                 <div className="form-row">
                   <label className="field">
                     {wt(lang, "f_poll_hours")}
-                    <input
-                      type="number"
-                      name="poll"
-                      min={1}
-                      max={336}
-                      defaultValue={team.poll_hours_before}
-                      required
-                    />
+                    <input type="number" name="poll" min={1} max={336} defaultValue={team.poll_hours_before} required />
                   </label>
                   <label className="field">
                     {wt(lang, "f_remind_hours")}
-                    <input
-                      type="number"
-                      name="remind"
-                      min={1}
-                      max={336}
-                      defaultValue={team.remind_hours_before}
-                      required
-                    />
+                    <input type="number" name="remind" min={1} max={336} defaultValue={team.remind_hours_before} required />
                   </label>
                 </div>
-                <p className="muted small">{wt(lang, "timing_hint")}</p>
-                <button type="submit" className="btn btn-primary">
-                  {wt(lang, "f_save")}
-                </button>
+                <p className="faint small">{wt(lang, "timing_hint")}</p>
+                <div>
+                  <button type="submit" className="btn btn-primary">
+                    {wt(lang, "f_save")}
+                  </button>
+                </div>
               </form>
             </details>
           )}
@@ -472,27 +471,31 @@ export default async function TeamPage(props: {
         {isAdmin && (
           <section className="section">
             <h2 className="section-title">{wt(lang, "members")}</h2>
-            <div className="card rows">
+            <div className="group">
               {members.map((m) => {
                 const isMe = String(m.id) === String(user.id);
                 const targetIsAdmin = m.role === "admin";
                 // организаторов меняет и удаляет только создатель команды
                 const canManage = !isMe && (!targetIsAdmin || isOwner);
                 return (
-                  <div key={m.id} className="row">
-                    <div className="avatar avatar-sm">{String(m.first_name).charAt(0).toUpperCase()}</div>
-                    <span className="member-name">{m.first_name}</span>
-                    {m.username && <span className="muted small">@{m.username}</span>}
-                    <span className={targetIsAdmin ? "badge badge-admin" : "badge"}>
-                      {targetIsAdmin ? wt(lang, "role_admin") : wt(lang, "role_player")}
-                    </span>
-                    {!m.plays && <span className="muted small">{wt(lang, "not_playing")}</span>}
-
+                  <div key={m.id} className="group-row member-row">
+                    <div className="member-main">
+                      <span className="row-title">{m.first_name}</span>
+                      <span className="row-meta">
+                        {[
+                          m.username ? `@${m.username}` : null,
+                          targetIsAdmin ? wt(lang, "role_admin") : wt(lang, "role_player"),
+                          m.plays ? null : wt(lang, "not_playing"),
+                        ]
+                          .filter(Boolean)
+                          .join(" · ")}
+                      </span>
+                    </div>
                     <div className="member-actions">
                       {isMe && (
                         <form action={togglePlaysAction}>
                           <input type="hidden" name="team" value={team.id} />
-                          <button type="submit" className="btn btn-ghost">
+                          <button type="submit" className="btn-text">
                             {m.plays ? wt(lang, "btn_play_off") : wt(lang, "btn_play_on")}
                           </button>
                         </form>
@@ -503,12 +506,12 @@ export default async function TeamPage(props: {
                             <input type="hidden" name="team" value={team.id} />
                             <input type="hidden" name="target" value={m.id} />
                             <input type="hidden" name="mode" value={targetIsAdmin ? "remove" : "make"} />
-                            <button type="submit" className="btn btn-ghost">
+                            <button type="submit" className="btn-text">
                               {targetIsAdmin ? wt(lang, "btn_remove_org") : wt(lang, "btn_make_org")}
                             </button>
                           </form>
                           <details className="confirm">
-                            <summary className="btn btn-ghost btn-danger">{wt(lang, "btn_remove_member")}</summary>
+                            <summary className="btn-text btn-danger-text">{wt(lang, "btn_remove_member")}</summary>
                             <form action={removeMemberAction}>
                               <input type="hidden" name="team" value={team.id} />
                               <input type="hidden" name="target" value={m.id} />
@@ -527,7 +530,7 @@ export default async function TeamPage(props: {
           </section>
         )}
 
-        <p className="muted small" style={{ marginTop: 24 }}>
+        <p className="faint small" style={{ marginTop: 28 }}>
           {wt(lang, "bot_hint")}
         </p>
       </main>

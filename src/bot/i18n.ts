@@ -78,20 +78,20 @@ const ru = {
   newtraining_post_failed:
     "Не получилось отправить опрос в группу. Проверьте, что бот добавлен в группу и может писать сообщения.",
 
-  poll_title: "📅 {team}: тренировка",
-  poll_going: "✅ Идут ({count}):",
-  poll_not_going: "❌ Не идут: {n}",
-  poll_no_answer: "⏳ Не ответили: {n}",
-  btn_going: "✅ Иду",
-  btn_not_going: "❌ Не иду",
+  poll_title: "{team}: тренировка",
+  poll_going: "Идут ({count}):",
+  poll_not_going: "Не идут: {n}",
+  poll_no_answer: "Не ответили: {n}",
+  btn_going: "Иду",
+  btn_not_going: "Не иду",
 
   cb_not_found: "Тренировка не найдена.",
   cb_past: "Эта тренировка уже прошла.",
   cb_not_member:
     "Сначала вступите в команду: откройте бота в личных сообщениях и отправьте /join КОД",
   cb_already: "Ваш ответ уже записан.",
-  cb_saved_going: "Ответ записан: иду ✅",
-  cb_saved_not_going: "Ответ записан: не иду ❌",
+  cb_saved_going: "Ответ записан: иду",
+  cb_saved_not_going: "Ответ записан: не иду",
 
   private_only: "Эту команду нужно писать мне в личные сообщения.",
   not_organizer: "Это действие доступно только организатору команды.",
@@ -103,9 +103,9 @@ const ru = {
     "Не понимаю день недели «{day}». Используйте: пн, вт, ср, чт, пт, сб, вс или цифры 1–7.",
   schedule_bad_time: "Время указано неверно. Пример: 19:00",
   schedule_added:
-    "✅ Расписание добавлено: {slots}.\nОпрос приходит в группу за {poll} ч до тренировки, напоминание — за {remind} ч.\nПосмотреть и изменить: /schedule",
+    "Расписание добавлено: {slots}.\nОпрос приходит в группу за {poll} ч до тренировки, напоминание — за {remind} ч.\nПосмотреть и изменить: /schedule",
   schedule_no_group:
-    "⚠️ Группа команды ещё не привязана, поэтому опросы пока не будут публиковаться. Добавьте бота в группу и отправьте там /linkgroup.",
+    "Группа команды ещё не привязана, поэтому опросы пока не будут публиковаться. Добавьте бота в группу и отправьте там /linkgroup.",
   schedule_timing_line: "Опрос: за {poll} ч до тренировки · напоминание: за {remind} ч",
   schedule_empty: "Расписания пока нет. Добавьте: /newschedule",
   slot_deleted: "Удалено",
@@ -117,13 +117,13 @@ const ru = {
   timing_saved: "Сохранено для «{team}»: опрос за {poll} ч, напоминание за {remind} ч до тренировки.",
 
   reminder_group:
-    "⏰ Скоро тренировка: {when}.\nПока идут: {count}.\nЕщё не ответили: {names}\nПожалуйста, нажмите кнопку в опросе.",
+    "Скоро тренировка: {when}.\nПока идут: {count}.\nЕщё не ответили: {names}\nПожалуйста, нажмите кнопку в опросе.",
   alert_shortage:
-    "⚠️ {team}: на тренировку {when} пока идут {going} из {needed}. Не хватает: {missing}.",
-  btn_call: "🆘 Позвать ещё в группе",
-  btn_invite_text: "📋 Текст для приглашения",
+    "{team}: на тренировку {when} пока идут {going} из {needed}. Не хватает: {missing}.",
+  btn_call: "Позвать ещё в группе",
+  btn_invite_text: "Текст для приглашения",
   call_group:
-    "🆘 Нужно ещё игроков: {missing}! Тренировка {when}. Нажмите «Иду» в опросе выше или позовите друга.",
+    "Нужно ещё игроков: {missing}! Тренировка {when}. Нажмите «Иду» в опросе выше или позовите друга.",
   call_sent: "Отправлено в группу.",
   call_enough: "Игроков уже достаточно.",
   invite_text:
@@ -131,8 +131,8 @@ const ru = {
   invite_text_hint: "Перешлите это сообщение в другие чаты:",
 
   members_not_playing: " · не играет",
-  btn_play_off: "🚫 Я не играю — не считать меня",
-  btn_play_on: "🏃 Я играю — считать меня",
+  btn_play_off: "Я не играю — не считать меня",
+  btn_play_on: "Я играю — считать меня",
   play_saved_on: "Теперь вы учитываетесь в счётчике.",
   play_saved_off: "Вас больше не считают среди неответивших.",
   member_removed: "Удалено: {name}",
@@ -146,7 +146,7 @@ const ru = {
   leave_last_admin: "Вы единственный организатор этой команды, поэтому выйти нельзя.",
   leave_cancelled: "Отменено.",
 
-  members_hint: "👑 — назначить организатором, ⬇️ — снять роль, 🗑 — удалить из команды.",
+  members_hint: "— назначить организатором, — снять роль, — удалить из команды.",
   owner_only: "Менять роль и удалять организаторов может только создатель команды.",
   promoted: "{name} теперь организатор.",
   demoted: "{name} больше не организатор.",
@@ -156,36 +156,36 @@ const ru = {
 
   login_link_text:
     "Откройте сайт. Кнопка «в Telegram» входит автоматически, а ссылка для браузера работает один раз и действует 10 минут.",
-  btn_open_app: "📱 Открыть в Telegram",
-  btn_open_site: "🌐 Открыть в браузере",
+  btn_open_app: "Открыть в Telegram",
+  btn_open_site: "Открыть в браузере",
 
   cb_cancelled: "Эта тренировка отменена.",
-  training_cancelled: "❌ Тренировка {when} отменена.",
+  training_cancelled: "Тренировка {when} отменена.",
 
-  btn_later: "🤔 Отвечу позже",
-  poll_waitlist: "🪑 В очереди ({n}):",
-  poll_free: "🆓 Свободных мест: {n}",
-  poll_later: "🤔 Ответят позже: {n}",
+  btn_later: "Отвечу позже",
+  poll_waitlist: "В очереди ({n}):",
+  poll_free: "Свободных мест: {n}",
+  poll_later: "Ответят позже: {n}",
   cb_in_queue: "Мест нет, вы в очереди: №{n}",
-  cb_saved_later: "Напомню через час 🤔",
-  promoted_dm: "🎉 Освободилось место! Вы идёте на тренировку {when} ({team}).",
-  org_left: "ℹ️ {name} больше не идёт на тренировку {when}. Идут: {count}.",
+  cb_saved_later: "Напомню через час",
+  promoted_dm: "Освободилось место! Вы идёте на тренировку {when} ({team}).",
+  org_left: "{name} больше не идёт на тренировку {when}. Идут: {count}.",
   org_free: "Свободных мест: {free}.",
   org_promoted: "Из очереди занял место: {names}.",
-  later_reminder: "⏰ Вы просили напомнить про тренировку. Вот что сейчас:",
+  later_reminder: "Вы просили напомнить про тренировку. Вот что сейчас:",
 
-  btn_guests: "👥 Иду с кем-то",
+  btn_guests: "Иду с кем-то",
   btn_no_names: "Без имён",
   guest_unnamed: "Гость",
   poll_guest: "{name} (гость: {host})",
-  cb_guests_dm: "Продолжим в личных сообщениях 👥",
+  cb_guests_dm: "Продолжим в личных сообщениях",
   cb_guests_nodm: "Откройте бота в личных сообщениях, нажмите Старт и повторите.",
   guests_ask: "Сколько человек вы приведёте с собой на тренировку {when}?",
   guests_names_ask:
     "Напишите имена гостей через запятую (например: Аня, Борис) или нажмите «Без имён».",
   guests_done: "Готово. Гостей: {n}. Мест подтверждено: {in}, в очереди: {queued}.",
   guests_toomany: "Слишком много гостей: максимум 10 на тренировку.",
-  promoted_guest_dm: "🎉 Освободилось место для вашего гостя {name}: тренировка {when} ({team}).",
+  promoted_guest_dm: "Освободилось место для вашего гостя {name}: тренировка {when} ({team}).",
 
   lang_choose_user: "Language / Keel / Язык:",
   lang_choose_group: "Group language / Grupi keel / Язык группы:",
@@ -254,20 +254,20 @@ const en: typeof ru = {
   newtraining_post_failed:
     "Could not send the poll to the group. Make sure the bot is in the group and can post messages.",
 
-  poll_title: "📅 {team}: training",
-  poll_going: "✅ Going ({count}):",
-  poll_not_going: "❌ Not going: {n}",
-  poll_no_answer: "⏳ No answer yet: {n}",
-  btn_going: "✅ I'm in",
-  btn_not_going: "❌ I'm out",
+  poll_title: "{team}: training",
+  poll_going: "Going ({count}):",
+  poll_not_going: "Not going: {n}",
+  poll_no_answer: "No answer yet: {n}",
+  btn_going: "I'm in",
+  btn_not_going: "I'm out",
 
   cb_not_found: "Training not found.",
   cb_past: "This training has already taken place.",
   cb_not_member:
     "Join the team first: open the bot in a private chat and send /join CODE",
   cb_already: "Your answer is already saved.",
-  cb_saved_going: "Saved: you're going ✅",
-  cb_saved_not_going: "Saved: you're not going ❌",
+  cb_saved_going: "Saved: you're going",
+  cb_saved_not_going: "Saved: you're not going",
 
   private_only: "Please send this command to me in a private chat.",
   not_organizer: "Only a team organizer can do this.",
@@ -279,9 +279,9 @@ const en: typeof ru = {
     "I don't understand the weekday “{day}”. Use: mon, tue, wed, thu, fri, sat, sun or numbers 1–7.",
   schedule_bad_time: "The time looks invalid. Example: 19:00",
   schedule_added:
-    "✅ Schedule added: {slots}.\nThe poll is posted to the group {poll} h before training, the reminder {remind} h before.\nView and edit: /schedule",
+    "Schedule added: {slots}.\nThe poll is posted to the group {poll} h before training, the reminder {remind} h before.\nView and edit: /schedule",
   schedule_no_group:
-    "⚠️ The team's group is not linked yet, so polls will not be posted. Add the bot to the group and send /linkgroup there.",
+    "The team's group is not linked yet, so polls will not be posted. Add the bot to the group and send /linkgroup there.",
   schedule_timing_line: "Poll: {poll} h before training · reminder: {remind} h before",
   schedule_empty: "No schedule yet. Add one: /newschedule",
   slot_deleted: "Deleted",
@@ -293,13 +293,13 @@ const en: typeof ru = {
   timing_saved: "Saved for “{team}”: poll {poll} h before, reminder {remind} h before.",
 
   reminder_group:
-    "⏰ Training soon: {when}.\nGoing so far: {count}.\nNo answer yet: {names}\nPlease press a button in the poll.",
+    "Training soon: {when}.\nGoing so far: {count}.\nNo answer yet: {names}\nPlease press a button in the poll.",
   alert_shortage:
-    "⚠️ {team}: for the training on {when}, {going} of {needed} are going. Missing: {missing}.",
-  btn_call: "🆘 Call for players in the group",
-  btn_invite_text: "📋 Invitation text",
+    "{team}: for the training on {when}, {going} of {needed} are going. Missing: {missing}.",
+  btn_call: "Call for players in the group",
+  btn_invite_text: "Invitation text",
   call_group:
-    "🆘 We need {missing} more players! Training {when}. Press “I'm in” in the poll above or bring a friend.",
+    "We need {missing} more players! Training {when}. Press “I'm in” in the poll above or bring a friend.",
   call_sent: "Sent to the group.",
   call_enough: "There are already enough players.",
   invite_text:
@@ -307,8 +307,8 @@ const en: typeof ru = {
   invite_text_hint: "Forward this message to other chats:",
 
   members_not_playing: " · not playing",
-  btn_play_off: "🚫 I don't play — don't count me",
-  btn_play_on: "🏃 I play — count me",
+  btn_play_off: "I don't play — don't count me",
+  btn_play_on: "I play — count me",
   play_saved_on: "You are now counted in the poll.",
   play_saved_off: "You are no longer counted among those who haven't answered.",
   member_removed: "Removed: {name}",
@@ -322,7 +322,7 @@ const en: typeof ru = {
   leave_last_admin: "You are the only organizer of this team, so you can't leave.",
   leave_cancelled: "Cancelled.",
 
-  members_hint: "👑 — make organizer, ⬇️ — remove organizer role, 🗑 — remove from team.",
+  members_hint: "— make organizer, — remove organizer role, — remove from team.",
   owner_only: "Only the team's creator can change or remove organizers.",
   promoted: "{name} is now an organizer.",
   demoted: "{name} is no longer an organizer.",
@@ -332,36 +332,36 @@ const en: typeof ru = {
 
   login_link_text:
     "Open the website. The “in Telegram” button signs you in automatically; the browser link works once and expires in 10 minutes.",
-  btn_open_app: "📱 Open in Telegram",
-  btn_open_site: "🌐 Open in browser",
+  btn_open_app: "Open in Telegram",
+  btn_open_site: "Open in browser",
 
   cb_cancelled: "This training was cancelled.",
-  training_cancelled: "❌ Training {when} is cancelled.",
+  training_cancelled: "Training {when} is cancelled.",
 
-  btn_later: "🤔 Answer later",
-  poll_waitlist: "🪑 Waiting list ({n}):",
-  poll_free: "🆓 Spots left: {n}",
-  poll_later: "🤔 Will answer later: {n}",
+  btn_later: "Answer later",
+  poll_waitlist: "Waiting list ({n}):",
+  poll_free: "Spots left: {n}",
+  poll_later: "Will answer later: {n}",
   cb_in_queue: "No spots left, you're on the waiting list: #{n}",
-  cb_saved_later: "I'll remind you in an hour 🤔",
-  promoted_dm: "🎉 A spot opened up! You're going to the training on {when} ({team}).",
-  org_left: "ℹ️ {name} is no longer going to the training on {when}. Going: {count}.",
+  cb_saved_later: "I'll remind you in an hour",
+  promoted_dm: "A spot opened up! You're going to the training on {when} ({team}).",
+  org_left: "{name} is no longer going to the training on {when}. Going: {count}.",
   org_free: "Spots left: {free}.",
   org_promoted: "Moved up from the waiting list: {names}.",
-  later_reminder: "⏰ You asked for a reminder about the training. Here is the current status:",
+  later_reminder: "You asked for a reminder about the training. Here is the current status:",
 
-  btn_guests: "👥 I'm bringing someone",
+  btn_guests: "I'm bringing someone",
   btn_no_names: "No names",
   guest_unnamed: "Guest",
   poll_guest: "{name} (guest of {host})",
-  cb_guests_dm: "Let's continue in a private message 👥",
+  cb_guests_dm: "Let's continue in a private message",
   cb_guests_nodm: "Open the bot in a private chat, press Start and try again.",
   guests_ask: "How many people are you bringing to the training on {when}?",
   guests_names_ask:
     "Send the guests' names separated by commas (e.g. Anna, Boris) or press “No names”.",
   guests_done: "Done. Guests: {n}. Spots confirmed: {in}, on the waiting list: {queued}.",
   guests_toomany: "Too many guests: 10 per training at most.",
-  promoted_guest_dm: "🎉 A spot opened up for your guest {name}: training on {when} ({team}).",
+  promoted_guest_dm: "A spot opened up for your guest {name}: training on {when} ({team}).",
 
   lang_choose_user: "Language / Keel / Язык:",
   lang_choose_group: "Group language / Grupi keel / Язык группы:",
@@ -430,20 +430,20 @@ const et: typeof ru = {
   newtraining_post_failed:
     "Küsitlust ei õnnestunud gruppi saata. Veendu, et bot on grupis ja saab sõnumeid saata.",
 
-  poll_title: "📅 {team}: treening",
-  poll_going: "✅ Tulevad ({count}):",
-  poll_not_going: "❌ Ei tule: {n}",
-  poll_no_answer: "⏳ Pole vastanud: {n}",
-  btn_going: "✅ Tulen",
-  btn_not_going: "❌ Ei tule",
+  poll_title: "{team}: treening",
+  poll_going: "Tulevad ({count}):",
+  poll_not_going: "Ei tule: {n}",
+  poll_no_answer: "Pole vastanud: {n}",
+  btn_going: "Tulen",
+  btn_not_going: "Ei tule",
 
   cb_not_found: "Treeningut ei leitud.",
   cb_past: "See treening on juba toimunud.",
   cb_not_member:
     "Liitu kõigepealt meeskonnaga: ava bot privaatvestluses ja saada /join KOOD",
   cb_already: "Sinu vastus on juba salvestatud.",
-  cb_saved_going: "Salvestatud: tuled ✅",
-  cb_saved_not_going: "Salvestatud: sa ei tule ❌",
+  cb_saved_going: "Salvestatud: tuled",
+  cb_saved_not_going: "Salvestatud: sa ei tule",
 
   private_only: "Palun saada see käsk mulle privaatsõnumina.",
   not_organizer: "See on kättesaadav ainult meeskonna korraldajale.",
@@ -455,9 +455,9 @@ const et: typeof ru = {
     "Ma ei saa nädalapäevast „{day}” aru. Kasuta: e, t, k, n, r, l, p või numbreid 1–7.",
   schedule_bad_time: "Kellaaeg tundub vale. Näide: 19:00",
   schedule_added:
-    "✅ Ajakava lisatud: {slots}.\nKüsitlus postitatakse gruppi {poll} h enne treeningut, meeldetuletus {remind} h enne.\nVaata ja muuda: /schedule",
+    "Ajakava lisatud: {slots}.\nKüsitlus postitatakse gruppi {poll} h enne treeningut, meeldetuletus {remind} h enne.\nVaata ja muuda: /schedule",
   schedule_no_group:
-    "⚠️ Meeskonna gruppi pole veel seotud, seetõttu küsitlusi ei postitata. Lisa bot gruppi ja saada seal /linkgroup.",
+    "Meeskonna gruppi pole veel seotud, seetõttu küsitlusi ei postitata. Lisa bot gruppi ja saada seal /linkgroup.",
   schedule_timing_line: "Küsitlus: {poll} h enne treeningut · meeldetuletus: {remind} h enne",
   schedule_empty: "Ajakava pole veel. Lisa: /newschedule",
   slot_deleted: "Kustutatud",
@@ -469,13 +469,13 @@ const et: typeof ru = {
   timing_saved: "Salvestatud meeskonnale „{team}”: küsitlus {poll} h enne, meeldetuletus {remind} h enne.",
 
   reminder_group:
-    "⏰ Peagi on treening: {when}.\nPraegu tulevad: {count}.\nPole vastanud: {names}\nPalun vajuta küsitluses nuppu.",
+    "Peagi on treening: {when}.\nPraegu tulevad: {count}.\nPole vastanud: {names}\nPalun vajuta küsitluses nuppu.",
   alert_shortage:
-    "⚠️ {team}: treeninguks {when} tuleb praegu {going}/{needed}. Puudu: {missing}.",
-  btn_call: "🆘 Kutsu gruppi lisamängijaid",
-  btn_invite_text: "📋 Kutsetekst",
+    "{team}: treeninguks {when} tuleb praegu {going}/{needed}. Puudu: {missing}.",
+  btn_call: "Kutsu gruppi lisamängijaid",
+  btn_invite_text: "Kutsetekst",
   call_group:
-    "🆘 Vaja on veel {missing} mängijat! Treening {when}. Vajuta ülal küsitluses „Tulen” või too sõber kaasa.",
+    "Vaja on veel {missing} mängijat! Treening {when}. Vajuta ülal küsitluses „Tulen” või too sõber kaasa.",
   call_sent: "Gruppi saadetud.",
   call_enough: "Mängijaid on juba piisavalt.",
   invite_text:
@@ -483,8 +483,8 @@ const et: typeof ru = {
   invite_text_hint: "Edasta see sõnum teistesse vestlustesse:",
 
   members_not_playing: " · ei mängi",
-  btn_play_off: "🚫 Ma ei mängi — ära arvesta mind",
-  btn_play_on: "🏃 Ma mängin — arvesta mind",
+  btn_play_off: "Ma ei mängi — ära arvesta mind",
+  btn_play_on: "Ma mängin — arvesta mind",
   play_saved_on: "Sind arvestatakse nüüd küsitluses.",
   play_saved_off: "Sind ei loeta enam vastamata jätnute hulka.",
   member_removed: "Eemaldatud: {name}",
@@ -498,7 +498,7 @@ const et: typeof ru = {
   leave_last_admin: "Sa oled selle meeskonna ainus korraldaja, seega ei saa lahkuda.",
   leave_cancelled: "Tühistatud.",
 
-  members_hint: "👑 — määra korraldajaks, ⬇️ — võta korraldaja roll, 🗑 — eemalda meeskonnast.",
+  members_hint: "— määra korraldajaks, — võta korraldaja roll, — eemalda meeskonnast.",
   owner_only: "Organisaatorite rolli muuta ja neid eemaldada saab ainult meeskonna looja.",
   promoted: "{name} on nüüd korraldaja.",
   demoted: "{name} ei ole enam korraldaja.",
@@ -508,36 +508,36 @@ const et: typeof ru = {
 
   login_link_text:
     "Ava sait. Nupp „Telegramis” logib automaatselt sisse; brauseri link toimib ühe korra ja kehtib 10 minutit.",
-  btn_open_app: "📱 Ava Telegramis",
-  btn_open_site: "🌐 Ava brauseris",
+  btn_open_app: "Ava Telegramis",
+  btn_open_site: "Ava brauseris",
 
   cb_cancelled: "See treening on tühistatud.",
-  training_cancelled: "❌ Treening {when} on tühistatud.",
+  training_cancelled: "Treening {when} on tühistatud.",
 
-  btn_later: "🤔 Vastan hiljem",
-  poll_waitlist: "🪑 Ootejärjekorras ({n}):",
-  poll_free: "🆓 Vabu kohti: {n}",
-  poll_later: "🤔 Vastavad hiljem: {n}",
+  btn_later: "Vastan hiljem",
+  poll_waitlist: "Ootejärjekorras ({n}):",
+  poll_free: "Vabu kohti: {n}",
+  poll_later: "Vastavad hiljem: {n}",
   cb_in_queue: "Kohti pole, oled ootejärjekorras: nr {n}",
-  cb_saved_later: "Tuletan tunni aja pärast meelde 🤔",
-  promoted_dm: "🎉 Vabanes koht! Sa tuled treeningule {when} ({team}).",
-  org_left: "ℹ️ {name} ei tule enam treeningule {when}. Tulevad: {count}.",
+  cb_saved_later: "Tuletan tunni aja pärast meelde",
+  promoted_dm: "Vabanes koht! Sa tuled treeningule {when} ({team}).",
+  org_left: "{name} ei tule enam treeningule {when}. Tulevad: {count}.",
   org_free: "Vabu kohti: {free}.",
   org_promoted: "Ootejärjekorrast sai koha: {names}.",
-  later_reminder: "⏰ Palusid treeningust meelde tuletada. Praegune seis:",
+  later_reminder: "Palusid treeningust meelde tuletada. Praegune seis:",
 
-  btn_guests: "👥 Tulen kellegagi",
+  btn_guests: "Tulen kellegagi",
   btn_no_names: "Ilma nimedeta",
   guest_unnamed: "Külaline",
   poll_guest: "{name} (külaline: {host})",
-  cb_guests_dm: "Jätkame privaatsõnumites 👥",
+  cb_guests_dm: "Jätkame privaatsõnumites",
   cb_guests_nodm: "Ava bot privaatvestluses, vajuta Start ja proovi uuesti.",
   guests_ask: "Mitu inimest tood treeningule {when} kaasa?",
   guests_names_ask:
     "Saada külaliste nimed komadega eraldatult (nt Anna, Boris) või vajuta „Ilma nimedeta”.",
   guests_done: "Valmis. Külalisi: {n}. Kohti kinnitatud: {in}, ootejärjekorras: {queued}.",
   guests_toomany: "Liiga palju külalisi: maksimaalselt 10 treeningu kohta.",
-  promoted_guest_dm: "🎉 Vabanes koht sinu külalisele {name}: treening {when} ({team}).",
+  promoted_guest_dm: "Vabanes koht sinu külalisele {name}: treening {when} ({team}).",
 
   lang_choose_user: "Language / Keel / Язык:",
   lang_choose_group: "Group language / Grupi keel / Язык группы:",

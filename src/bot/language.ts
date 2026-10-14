@@ -1,14 +1,14 @@
 import { InlineKeyboard } from "grammy";
 import type { Bot } from "grammy";
 import { sql } from "@/lib/db";
-import { ensureUser } from "./helpers";
+import { ensureUser, tryDelete } from "./helpers";
 import { t, LANG_NAMES, type Lang } from "./i18n";
 
 export function langKeyboard() {
   return new InlineKeyboard()
-    .text("🇪🇪 Eesti", "lang:et")
-    .text("🇷🇺 Русский", "lang:ru")
-    .text("🇬🇧 English", "lang:en");
+    .text("Eesti", "lang:et")
+    .text("Русский", "lang:ru")
+    .text("English", "lang:en");
 }
 
 export function registerLanguage(bot: Bot) {
@@ -24,7 +24,8 @@ export function registerLanguage(bot: Bot) {
       select 1 as ok from memberships
       where team_id = ${team.id} and user_id = ${user.id} and role = 'admin'`;
     if (!admin) return ctx.reply(t(user.lang, "lang_group_not_admin"));
-    return ctx.reply(t(team.language as Lang, "lang_choose_group"), { reply_markup: langKeyboard() });
+    await ctx.reply(t(team.language as Lang, "lang_choose_group"), { reply_markup: langKeyboard() });
+    return tryDelete(ctx);
   });
 
   bot.callbackQuery(/^lang:(et|ru|en)$/, async (ctx) => {

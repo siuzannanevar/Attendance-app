@@ -7,7 +7,7 @@ import { sql } from "@/lib/db";
 import { getCurrentUser } from "@/lib/session";
 import { publishTraining } from "@/bot/trainings";
 import { runAction } from "@/bot/schedule";
-import { isLang, type Lang } from "@/bot/i18n";
+import { isLang, t, type Lang } from "@/bot/i18n";
 import { addGuests, applyAnswer, cancelTraining, removeGuest } from "@/lib/rsvp";
 import { parseGuestNames } from "@/lib/seats";
 import { runTick } from "@/lib/tick";
@@ -96,7 +96,8 @@ export async function addScheduleAction(formData: FormData): Promise<void> {
 
   const lang: Lang = isLang(user.language) ? user.language : (team.language as Lang);
   const text = await runAction(bot.api, "schedule", team, user.id, lang, `${days.join(",")} ${time} ${need} ${place}`);
-  done(teamId, text.startsWith("✅") ? (text.includes("⚠️") ? "sched_nogroup" : "sched_ok") : "err");
+  const okPrefix = t(lang, "schedule_added", { slots: "", poll: 0, remind: 0 }).slice(0, 12);
+  done(teamId, text.startsWith(okPrefix) ? (team.chat_id ? "sched_ok" : "sched_nogroup") : "err");
 }
 
 // ---------- Удалить день расписания
