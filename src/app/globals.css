@@ -199,7 +199,7 @@ h1, h2, h3, p, dl, dd, ol { margin: 0; }
 
 /* ---------- макет ---------- */
 .container { max-width: 720px; margin: 0 auto; padding: 28px 20px 96px; }
-.page-title { font-size: 32px; line-height: 1.15; font-weight: 700; letter-spacing: -0.03em; min-width: 0; overflow-wrap: anywhere; }
+.page-title { font-size: 32px; line-height: 1.15; font-weight: 700; letter-spacing: -0.03em; min-width: 0; overflow-wrap: anywhere; margin-bottom: 12px; }
 .team-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
 .role {
   flex: none;
@@ -274,7 +274,7 @@ h1, h2, h3, p, dl, dd, ol { margin: 0; }
   background: var(--accent-soft);
   color: var(--accent);
   font-size: 13px;
-  font-weight: 650;
+  font-weight: 650; 
   text-align: center;
   text-transform: uppercase;
 }
