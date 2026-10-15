@@ -138,7 +138,7 @@ export default async function TeamPage(props: {
 
         <div className="team-head">
           <h1 className="page-title">{team.name}</h1>
-          <span className="role">{isAdmin ? wt(lang, "role_admin") : wt(lang, "role_player")}</span>
+          <span className={isAdmin ? "role is-admin" : "role"}>{isAdmin ? wt(lang, "role_admin") : wt(lang, "role_player")}</span>
         </div>
 
         {notice && (
@@ -146,11 +146,14 @@ export default async function TeamPage(props: {
         )}
 
         <section className="section">
-          <h2 className="section-title">{wt(lang, "upcoming")}</h2>
+          <div className="section-head">
+            <h2 className="section-title">{wt(lang, "upcoming")}</h2>
+            {trainings.length > 0 && <span className="section-count">{trainings.length}</span>}
+          </div>
 
           {isAdmin && (
             <details className="panel">
-              <summary className="btn">{wt(lang, "new_training")}</summary>
+              <summary className="btn btn-add">{wt(lang, "new_training")}</summary>
               <form action={createTrainingAction} className="form">
                 <input type="hidden" name="team" value={team.id} />
                 <div className="form-row">
@@ -212,14 +215,24 @@ export default async function TeamPage(props: {
                 return (
                   <article key={tr.id} className="card training">
                     <div className="training-top">
-                      <div>
-                        <div className="training-date">
-                          {p.weekday}, {p.day} {p.month}
-                        </div>
-                        <div className="training-time">{p.time}</div>
-                        {tr.place && <div className="muted">{tr.place}</div>}
+                      <div className="date-chip">
+                        <span className="dc-wd">{p.weekday}</span>
+                        <span className="dc-day">{p.day}</span>
+                        <span className="dc-mo">{p.month}</span>
                       </div>
-                      <div className="training-count">
+                      <div className="training-info">
+                        <div className="training-time">{p.time}</div>
+                        {tr.place && (
+                          <div className="training-place">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                              <path d="M12 21s7-6.2 7-11.5A7 7 0 0 0 5 9.5C5 14.8 12 21 12 21z" />
+                              <circle cx="12" cy="9.5" r="2.5" />
+                            </svg>
+                            <span>{tr.place}</span>
+                          </div>
+                        )}
+                      </div>
+                      <div className={cap && confirmed.length >= cap ? "training-count is-full" : "training-count"}>
                         <div>
                           <span className="count-num">{confirmed.length}</span>
                           {cap ? <span className="count-of">/{cap}</span> : null}
@@ -230,29 +243,29 @@ export default async function TeamPage(props: {
 
                     {cap ? (
                       <div className="progress">
-                        <div className="progress-bar" style={{ width: `${pct}%` }} />
+                        <div className={pct >= 100 ? "progress-bar is-full" : "progress-bar"} style={{ width: `${pct}%` }} />
                       </div>
                     ) : null}
 
                     <dl className="stats">
                       {cap ? (
-                        <div className="stat">
+                        <div className="stat stat-free">
                           <dt>{wt(lang, "free_spots")}</dt>
                           <dd>{Math.max(0, cap - confirmed.length)}</dd>
                         </div>
                       ) : null}
                       {queue.length > 0 ? (
-                        <div className="stat">
+                        <div className="stat stat-wait">
                           <dt>{wt(lang, "waitlist")}</dt>
                           <dd>{queue.length}</dd>
                         </div>
                       ) : null}
-                      <div className="stat">
+                      <div className="stat stat-no">
                         <dt>{wt(lang, "not_going")}</dt>
                         <dd>{tr.not_going}</dd>
                       </div>
                       {tr.later > 0 ? (
-                        <div className="stat">
+                        <div className="stat stat-later">
                           <dt>{wt(lang, "later_label")}</dt>
                           <dd>{tr.later}</dd>
                         </div>
@@ -266,7 +279,13 @@ export default async function TeamPage(props: {
                     {confirmed.length > 0 && (
                       <div className="roster">
                         <div className="roster-title">{wt(lang, "going")}</div>
-                        <p>{confirmed.map(seatLabel).join(", ")}</p>
+                        <ul className="chips">
+                          {confirmed.map((s) => (
+                            <li key={s.key} className={s.guestId ? "chip chip-guest" : "chip"}>
+                              {seatLabel(s)}
+                            </li>
+                          ))}
+                        </ul>
                       </div>
                     )}
                     {queue.length > 0 && (
@@ -280,7 +299,7 @@ export default async function TeamPage(props: {
                       </div>
                     )}
 
-                    <div className="your">
+                    <div className={`your your-${tr.my_status ?? "none"}`}>
                       {wt(lang, "your_answer")}: <strong>{myLabel}</strong>
                     </div>
                     <form action={answerAction} className="answer-buttons">
@@ -352,7 +371,7 @@ export default async function TeamPage(props: {
                     )}
 
                     {isAdmin && (
-                      <form action={cancelTrainingAction}>
+                      <form action={cancelTrainingAction} className="card-foot">
                         <input type="hidden" name="team" value={team.id} />
                         <input type="hidden" name="training" value={tr.id} />
                         <button type="submit" className="btn-text btn-danger-text">
@@ -368,16 +387,17 @@ export default async function TeamPage(props: {
         </section>
 
         <section className="section">
-          <h2 className="section-title">{wt(lang, "schedule")}</h2>
+          <div className="section-head">
+            <h2 className="section-title">{wt(lang, "schedule")}</h2>
+          </div>
           {slots.length === 0 ? (
             <div className="card empty">{wt(lang, "no_schedule")}</div>
           ) : (
             <div className="group">
               {slots.map((s) => (
                 <div key={s.id} className="group-row">
-                  <span className="row-title">
-                    {weekdayShort(lang, s.weekday)} {String(s.start_time).slice(0, 5)}
-                  </span>
+                  <span className="slot-day">{weekdayShort(lang, s.weekday)}</span>
+                  <span className="row-title">{String(s.start_time).slice(0, 5)}</span>
                   <span className="row-meta">
                     {[s.needed_players ? String(s.needed_players) : null, s.place].filter(Boolean).join(" · ")}
                   </span>
@@ -405,7 +425,7 @@ export default async function TeamPage(props: {
 
           {isAdmin && (
             <details className="panel">
-              <summary className="btn">{wt(lang, "add_slot")}</summary>
+              <summary className="btn btn-add">{wt(lang, "add_slot")}</summary>
               <form action={addScheduleAction} className="form">
                 <input type="hidden" name="team" value={team.id} />
                 <div className="field">
@@ -470,7 +490,10 @@ export default async function TeamPage(props: {
 
         {isAdmin && (
           <section className="section">
-            <h2 className="section-title">{wt(lang, "members")}</h2>
+            <div className="section-head">
+              <h2 className="section-title">{wt(lang, "members")}</h2>
+              <span className="section-count">{members.length}</span>
+            </div>
             <div className="group">
               {members.map((m) => {
                 const isMe = String(m.id) === String(user.id);
@@ -479,6 +502,9 @@ export default async function TeamPage(props: {
                 const canManage = !isMe && (!targetIsAdmin || isOwner);
                 return (
                   <div key={m.id} className="group-row member-row">
+                    <span className="avatar" aria-hidden="true">
+                      {String(m.first_name ?? "?").trim().slice(0, 1).toUpperCase()}
+                    </span>
                     <div className="member-main">
                       <span className="row-title">{m.first_name}</span>
                       <span className="row-meta">

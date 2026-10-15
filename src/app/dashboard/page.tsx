@@ -29,6 +29,9 @@ export default async function Dashboard() {
           <div className="group">
             {teams.map((tm) => (
               <Link key={tm.id} href={`/teams/${tm.id}`} className="group-row link-row">
+                <span className="team-icon" aria-hidden="true">
+                  {String(tm.name).trim().slice(0, 1).toUpperCase()}
+                </span>
                 <span className="row-title">{tm.name}</span>
                 <span className="row-meta">
                   {tm.role === "admin" ? wt(lang, "role_admin") : wt(lang, "role_player")}
