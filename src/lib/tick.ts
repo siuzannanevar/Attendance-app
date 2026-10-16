@@ -8,6 +8,13 @@ import { loadSeats } from "@/lib/seats";
 
 const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
+// Ошибки, после которых имеет смысл повторить отправку позже: сбой сети, лимит Telegram (429), ошибки сервера (5xx).
+// 400/403 (бот не в группе, человек не начинал диалог с ботом) повторять бессмысленно.
+function isRetryable(e: unknown): boolean {
+  const code = (e as { error_code?: number } | null)?.error_code;
+  return code === undefined || code === 429 || code >= 500;
+}
+
 // «Тик» планировщика. Безопасно вызывать сколько угодно раз: повторно ничего не отправит.
 //  A) создаёт ближайшие тренировки по расписанию (на 14 дней вперёд);
 //  B) публикует опросы, у которых наступило время;
@@ -113,11 +120,21 @@ export async function runTick(api: Api, onlyTeamId?: string | number) {
           count: going,
           names,
         });
-        await api.sendMessage(row.chat_id, text, {
-          parse_mode: "HTML",
-          reply_parameters: { message_id: Number(row.poll_message_id), allow_sending_without_reply: true },
-        });
-        stats.reminded++;
+        try {
+          await api.sendMessage(row.chat_id, text, {
+            parse_mode: "HTML",
+            reply_parameters: { message_id: Number(row.poll_message_id), allow_sending_without_reply: true },
+          });
+          stats.reminded++;
+        } catch (e) {
+          console.error("tick remind group:", e);
+          stats.errors++;
+          if (isRetryable(e)) {
+            // не теряем напоминание: следующий запуск попробует снова
+            await sql`update trainings set reminded_at = null where id = ${row.id}`;
+            continue;
+          }
+        }
       }
 
       // 2) Предупреждение организаторам, если игроков не хватает
@@ -182,6 +199,12 @@ export async function runTick(api: Api, onlyTeamId?: string | number) {
     } catch (e) {
       console.error("tick later:", e);
       stats.errors++;
+      if (isRetryable(e)) {
+        await sql`
+          update rsvps set remind_at = now() + interval '5 minutes'
+          where training_id = ${l.training_id} and user_id = ${l.user_id}
+            and status = 'later' and remind_at is null`;
+      }
     }
   }
 
