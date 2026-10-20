@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import Header from "@/components/Header";
 import WebAppAutoLogin from "@/components/WebAppAutoLogin";
+import BrowserLogin from "@/components/BrowserLogin";
 import { getCurrentUser, getLang } from "@/lib/session";
 import { wt } from "@/lib/web-i18n";
 
@@ -30,12 +31,14 @@ export default async function Home({
           <h1>{wt(lang, "login_title")}</h1>
           <p className="muted">{wt(lang, "login_hint")}</p>
           {error && <p className="notice notice-err">{wt(lang, "login_failed")}</p>}
-          <a
-            href="https://t.me/attendance_team2026_bot?start=login"
-            className="btn btn-primary btn-lg"
-          >
-            {wt(lang, "login_bot_button")}
-          </a>
+          <BrowserLogin
+            botUsername="attendance_team2026_bot"
+            labels={{
+              button: wt(lang, "login_bot_button"),
+              preparing: wt(lang, "login_preparing"),
+              waiting: wt(lang, "login_waiting"),
+            }}
+          />
           <p className="faint small">{wt(lang, "login_bot_hint")}</p>
         </div>
       </main>

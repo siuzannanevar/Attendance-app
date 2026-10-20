@@ -166,6 +166,10 @@ const ru = {
     "Откройте сайт. Кнопка «в Telegram» входит автоматически, а ссылка для браузера работает один раз и действует 10 минут.",
   btn_open_app: "Открыть в Telegram",
   btn_open_site: "Открыть в браузере",
+  login_confirm_text:
+    "Подтвердите вход на сайт в браузере. Если вы этого не запрашивали, просто проигнорируйте это сообщение.",
+  btn_login_confirm: "Да, войти",
+  login_confirmed: "Готово! Вернитесь в браузер: вход выполнится автоматически.",
 
   cb_cancelled: "Эта тренировка отменена.",
   training_cancelled: "Тренировка {when} отменена.",
@@ -350,6 +354,10 @@ const en: typeof ru = {
     "Open the website. The “in Telegram” button signs you in automatically; the browser link works once and expires in 10 minutes.",
   btn_open_app: "Open in Telegram",
   btn_open_site: "Open in browser",
+  login_confirm_text:
+    "Confirm sign-in to the website in your browser. If you did not request this, just ignore this message.",
+  btn_login_confirm: "Yes, sign me in",
+  login_confirmed: "Done! Go back to your browser: you will be signed in automatically.",
 
   cb_cancelled: "This training was cancelled.",
   training_cancelled: "Training {when} is cancelled.",
@@ -534,6 +542,10 @@ const et: typeof ru = {
     "Ava sait. Nupp „Telegramis” logib automaatselt sisse; brauseri link toimib ühe korra ja kehtib 10 minutit.",
   btn_open_app: "Ava Telegramis",
   btn_open_site: "Ava brauseris",
+  login_confirm_text:
+    "Kinnita sisselogimine veebisaidile brauseris. Kui sa seda ei küsinud, ignoreeri seda sõnumit.",
+  btn_login_confirm: "Jah, logi sisse",
+  login_confirmed: "Valmis! Mine tagasi brauserisse: sisselogimine toimub automaatselt.",
 
   cb_cancelled: "See treening on tühistatud.",
   training_cancelled: "Treening {when} on tühistatud.",
