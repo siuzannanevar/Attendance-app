@@ -120,6 +120,7 @@ const ru = {
     "Скоро тренировка: {when}.\nПока идут: {count}.\nЕщё не ответили: {names}\nПожалуйста, нажмите кнопку в опросе.",
   alert_shortage:
     "{team}: на тренировку {when} пока идут {going} из {needed}. Не хватает: {missing}.",
+  alert_unanswered: "Ещё не ответили: {names}.",
   btn_call: "Позвать ещё в группе",
   btn_invite_text: "Текст для приглашения",
   call_group:
@@ -296,6 +297,7 @@ const en: typeof ru = {
     "Training soon: {when}.\nGoing so far: {count}.\nNo answer yet: {names}\nPlease press a button in the poll.",
   alert_shortage:
     "{team}: for the training on {when}, {going} of {needed} are going. Missing: {missing}.",
+  alert_unanswered: "No answer yet: {names}.",
   btn_call: "Call for players in the group",
   btn_invite_text: "Invitation text",
   call_group:
@@ -472,6 +474,7 @@ const et: typeof ru = {
     "Peagi on treening: {when}.\nPraegu tulevad: {count}.\nPole vastanud: {names}\nPalun vajuta küsitluses nuppu.",
   alert_shortage:
     "{team}: treeninguks {when} tuleb praegu {going}/{needed}. Puudu: {missing}.",
+  alert_unanswered: "Pole vastanud: {names}.",
   btn_call: "Kutsu gruppi lisamängijaid",
   btn_invite_text: "Kutsetekst",
   call_group:

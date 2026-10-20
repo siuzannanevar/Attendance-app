@@ -6,8 +6,6 @@ import { t, isLang, type Lang } from "@/bot/i18n";
 import { formatWhen } from "@/bot/format";
 import { loadSeats } from "@/lib/seats";
 
-const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-
 // Ошибки, после которых имеет смысл повторить отправку позже: сбой сети, лимит Telegram (429), ошибки сервера (5xx).
 // 400/403 (бот не в группе, человек не начинал диалог с ботом) повторять бессмысленно.
 function isRetryable(e: unknown): boolean {
@@ -18,7 +16,8 @@ function isRetryable(e: unknown): boolean {
 // «Тик» планировщика. Безопасно вызывать сколько угодно раз: повторно ничего не отправит.
 //  A) создаёт ближайшие тренировки по расписанию (на 14 дней вперёд);
 //  B) публикует опросы, у которых наступило время;
-//  C) напоминает тем, кто не ответил, и предупреждает организатора о недоборе.
+//  C) предупреждает организаторов (в личку) о недоборе и пишет, кто ещё не ответил;
+//  D) возвращает «Отвечу позже» через час.
 export async function runTick(api: Api, onlyTeamId?: string | number) {
   const stats = { created: 0, published: 0, reminded: 0, alerts: 0, laters: 0, errors: 0 };
   const teamFilter = onlyTeamId ? sql`and tm.id = ${onlyTeamId}` : sql``;
@@ -99,7 +98,7 @@ export async function runTick(api: Api, onlyTeamId?: string | number) {
     const teamLang = row.language as Lang;
     try {
       const unanswered = await sql`
-        select u.first_name, u.telegram_id
+        select u.first_name
         from memberships m join users u on u.id = m.user_id
         where m.team_id = ${row.team_id} and m.plays
           and not exists (
@@ -110,49 +109,28 @@ export async function runTick(api: Api, onlyTeamId?: string | number) {
         order by u.first_name`;
       const going = (await loadSeats(row.id)).length; // занято мест: участники и гости
 
-      // 1) Напоминание в группу с «упоминаниями» (приходит как заметное уведомление)
-      if (unanswered.length > 0 && row.chat_id) {
-        const names = unanswered
-          .map((u) => `<a href="tg://user?id=${u.telegram_id}">${esc(u.first_name)}</a>`)
-          .join(", ");
-        const text = t(teamLang, "reminder_group", {
-          when: esc(formatWhen(row.starts_at, row.timezone, teamLang)),
-          count: going,
-          names,
-        });
-        try {
-          await api.sendMessage(row.chat_id, text, {
-            parse_mode: "HTML",
-            reply_parameters: { message_id: Number(row.poll_message_id), allow_sending_without_reply: true },
-          });
-          stats.reminded++;
-        } catch (e) {
-          console.error("tick remind group:", e);
-          stats.errors++;
-          if (isRetryable(e)) {
-            // не теряем напоминание: следующий запуск попробует снова
-            await sql`update trainings set reminded_at = null where id = ${row.id}`;
-            continue;
-          }
-        }
-      }
-
-      // 2) Предупреждение организаторам, если игроков не хватает
+      // Если игроков не хватает, пишем ТОЛЬКО организаторам (в личку), в группу ничего не отправляем.
+      // В сообщении: сколько идёт, сколько не хватает и кто ещё не ответил.
       const needed = row.needed_players as number | null;
       if (needed && going < needed) {
         const admins = await sql`
           select u.telegram_id, u.language
           from memberships m join users u on u.id = m.user_id
           where m.team_id = ${row.team_id} and m.role = 'admin'`;
+        let sent = 0;
+        let retryable = 0;
         for (const a of admins) {
           const lang: Lang = isLang(a.language) ? a.language : teamLang;
-          const text = t(lang, "alert_shortage", {
+          let text = t(lang, "alert_shortage", {
             team: row.team_name,
             when: formatWhen(row.starts_at, row.timezone, lang),
             going,
             needed,
             missing: needed - going,
           });
+          if (unanswered.length > 0) {
+            text += "\n" + t(lang, "alert_unanswered", { names: unanswered.map((u) => u.first_name).join(", ") });
+          }
           const kb = new InlineKeyboard()
             .text(t(lang, "btn_call"), `sf:call:${row.id}`)
             .row()
@@ -160,9 +138,17 @@ export async function runTick(api: Api, onlyTeamId?: string | number) {
           try {
             await api.sendMessage(a.telegram_id, text, { reply_markup: kb });
             stats.alerts++;
+            sent++;
           } catch (e) {
             console.error("tick alert (организатор не начал диалог с ботом?):", e);
+            if (isRetryable(e)) retryable++;
           }
+        }
+        // Никому не дошло из-за временного сбоя: не теряем предупреждение, следующий запуск повторит
+        if (sent === 0 && retryable > 0) {
+          stats.errors++;
+          await sql`update trainings set reminded_at = null where id = ${row.id}`;
+          continue;
         }
       }
     } catch (e) {

@@ -291,11 +291,12 @@ export async function removeGuest(
   return { result: "ok" };
 }
 
-// Отменяет тренировку: помечает в базе, убирает опрос из группы и пишет туда сообщение об отмене
+// Отменяет тренировку: помечает в базе, убирает опрос из группы (если он был) и пишет в группу сообщение об отмене.
+// Сообщение уходит в группу команды, даже если опрос ещё не был опубликован.
 export async function cancelTraining(api: Api, trainingId: string): Promise<boolean> {
   const [tr] = await sql`
     select tr.id, tr.starts_at, tr.poll_chat_id, tr.poll_message_id,
-           tm.timezone, tm.language
+           tm.timezone, tm.language, tm.chat_id
     from trainings tr join teams tm on tm.id = tr.team_id
     where tr.id = ${trainingId} and tr.cancelled_at is null`;
   if (!tr) return false;
@@ -308,14 +309,18 @@ export async function cancelTraining(api: Api, trainingId: string): Promise<bool
     } catch {
       /* сообщение уже удалено или нет прав */
     }
+  }
+
+  const chatId = tr.poll_chat_id ?? tr.chat_id;
+  if (chatId) {
     try {
       const lang = tr.language as Lang;
       await api.sendMessage(
-        tr.poll_chat_id,
+        chatId,
         t(lang, "training_cancelled", { when: formatWhen(tr.starts_at, tr.timezone, lang) })
       );
-    } catch {
-      /* бот не в группе — не страшно */
+    } catch (e) {
+      console.error("cancelTraining notify:", e); // бот не в группе — тренировка всё равно отменена
     }
   }
   return true;
