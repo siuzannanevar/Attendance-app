@@ -109,6 +109,28 @@ async function notifyPromoted(
   return promoted;
 }
 
+// Организаторам: набралось нужное число игроков (пишем один раз, в момент, когда число идущих дошло до нужного)
+async function notifyFull(api: Api, tr: TrainingInfo, before: Seat[], after: Seat[], cap: number) {
+  if (!cap || before.length >= cap || after.length < cap) return;
+  const admins = await sql`
+    select u.telegram_id, u.language
+    from memberships m join users u on u.id = m.user_id
+    where m.team_id = ${tr.team_id} and m.role = 'admin'`;
+  for (const a of admins) {
+    const lang: Lang = isLang(a.language) ? a.language : (tr.language as Lang);
+    const text = t(lang, "org_full", {
+      team: tr.team_name,
+      when: formatWhen(tr.starts_at, tr.timezone, lang),
+      count: `${cap}/${cap}`,
+    });
+    try {
+      await api.sendMessage(a.telegram_id, text);
+    } catch {
+      /* организатор не начинал диалог с ботом */
+    }
+  }
+}
+
 // Записывает ответ (иду / не иду / отвечу позже) из бота или с сайта.
 // Двигает очередь, уведомляет тех, кто получил место, и организаторов, и обновляет опрос в группе.
 export async function applyAnswer(
@@ -170,6 +192,7 @@ export async function applyAnswer(
 
   try {
     const promoted = await notifyPromoted(api, tr, before, after, cap, me);
+    await notifyFull(api, tr, before, after, cap);
 
     // Организаторам: кто-то перестал идти
     if (wasGoing && status !== "going") {
@@ -227,6 +250,7 @@ export async function addGuests(
 
   const [current] = await sql`
     select status from rsvps where training_id = ${trainingId} and user_id = ${userId}`;
+  const before = await loadSeats(trainingId);
 
   await sql.begin(async (tx) => {
     await tx`
@@ -254,6 +278,11 @@ export async function addGuests(
   const mine = after.map((s, i) => ({ s, i })).filter((x) => x.s.hostId === me && x.s.guestId);
   const guestsIn = mine.filter((x) => !cap || x.i < cap).length;
 
+  try {
+    await notifyFull(api, tr, before, after, cap);
+  } catch (e) {
+    console.error("addGuests notify:", e);
+  }
   await refreshPoll(api, trainingId);
   return {
     result: "ok",
