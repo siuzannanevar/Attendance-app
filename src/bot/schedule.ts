@@ -5,6 +5,7 @@ import { ensureUser } from "./helpers";
 import { t, type Lang } from "./i18n";
 import { formatWhen, parseWeekdays, weekdayShort } from "./format";
 import { runTick } from "@/lib/tick";
+import { cancelTraining } from "@/lib/rsvp";
 import { loadSeats } from "@/lib/seats";
 
 type Row = Record<string, any>;
@@ -219,6 +220,96 @@ export function registerSchedule(bot: Bot) {
       console.error("editMessageText:", e);
     }
     return ctx.answerCallbackQuery({ text: t(user.lang, "slot_deleted") });
+  });
+
+  // ----- /canceltraining: отменить тренировку (только организатор). Список ближайших → подтверждение → отмена
+  bot.command("canceltraining", async (ctx) => {
+    const user = await ensureUser(ctx);
+    if (ctx.chat.type !== "private") return ctx.reply(t(user.lang, "private_only"));
+
+    const teams = await adminTeams(user.id);
+    if (teams.length === 0) return ctx.reply(t(user.lang, "newtraining_no_admin_team"));
+
+    const rows = await sql`
+      select tr.id, tr.starts_at, tm.name as team_name, tm.timezone
+      from trainings tr
+      join teams tm on tm.id = tr.team_id
+      join memberships m on m.team_id = tm.id
+      where m.user_id = ${user.id} and m.role = 'admin'
+        and tr.cancelled_at is null and tr.starts_at > now()
+      order by tr.starts_at
+      limit 20`;
+    if (rows.length === 0) return ctx.reply(t(user.lang, "cancel_none"));
+
+    const kb = new InlineKeyboard();
+    for (const r of rows) {
+      const label = formatWhen(r.starts_at, r.timezone, user.lang) + (teams.length > 1 ? ` · ${r.team_name}` : "");
+      kb.text(label, `ct:${r.id}`).row();
+    }
+    return ctx.reply(t(user.lang, "cancel_choose"), { reply_markup: kb });
+  });
+
+  // Данные тренировки, если пользователь — организатор её команды и она ещё не отменена и не прошла
+  async function adminTraining(trainingId: string, userId: string) {
+    const [tr] = await sql`
+      select tr.id, tr.starts_at, tm.name as team_name, tm.timezone
+      from trainings tr
+      join teams tm on tm.id = tr.team_id
+      join memberships m on m.team_id = tm.id
+      where tr.id = ${trainingId} and m.user_id = ${userId} and m.role = 'admin'
+        and tr.cancelled_at is null and tr.starts_at > now()`;
+    return tr;
+  }
+
+  // Выбрали тренировку → спрашиваем подтверждение
+  bot.callbackQuery(/^ct:(\d+)$/, async (ctx) => {
+    const id = (ctx.match as RegExpMatchArray)[1];
+    const user = await ensureUser(ctx);
+    const tr = await adminTraining(id, user.id);
+    if (!tr) return ctx.answerCallbackQuery({ text: t(user.lang, "cancel_gone"), show_alert: true });
+    const kb = new InlineKeyboard()
+      .text(t(user.lang, "cancel_yes"), `cy:${id}`)
+      .text(t(user.lang, "btn_cancel"), "cz");
+    try {
+      await ctx.editMessageText(
+        t(user.lang, "cancel_confirm", {
+          when: formatWhen(tr.starts_at, tr.timezone, user.lang),
+          team: tr.team_name,
+        }),
+        { reply_markup: kb }
+      );
+    } catch (e) {
+      console.error("editMessageText:", e);
+    }
+    return ctx.answerCallbackQuery();
+  });
+
+  // Подтвердили → отменяем (в группу уходит сообщение об отмене, опрос удаляется)
+  bot.callbackQuery(/^cy:(\d+)$/, async (ctx) => {
+    const id = (ctx.match as RegExpMatchArray)[1];
+    const user = await ensureUser(ctx);
+    const tr = await adminTraining(id, user.id);
+    if (!tr) return ctx.answerCallbackQuery({ text: t(user.lang, "cancel_gone"), show_alert: true });
+    await cancelTraining(ctx.api, id);
+    try {
+      await ctx.editMessageText(
+        t(user.lang, "training_cancelled", { when: formatWhen(tr.starts_at, tr.timezone, user.lang) })
+      );
+    } catch (e) {
+      console.error("editMessageText:", e);
+    }
+    return ctx.answerCallbackQuery();
+  });
+
+  // Передумали
+  bot.callbackQuery("cz", async (ctx) => {
+    const user = await ensureUser(ctx);
+    try {
+      await ctx.editMessageText(t(user.lang, "leave_cancelled"));
+    } catch (e) {
+      console.error("editMessageText:", e);
+    }
+    return ctx.answerCallbackQuery();
   });
 
   // ----- Кнопки из предупреждения о недоборе: позвать ещё / текст приглашения

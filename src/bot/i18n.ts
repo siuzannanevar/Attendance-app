@@ -30,6 +30,7 @@ const ru = {
     "/schedule — расписание\n" +
     "/timing ОПРОС НАПОМИНАНИЕ — за сколько часов публиковать (по умолчанию 48 и 24)\n" +
     "/newtraining ДД.ММ ЧЧ:ММ МЕСТ Место — разовая тренировка\n" +
+    "/canceltraining — отменить тренировку\n" +
     "/login — ссылка для входа на сайт\n" +
     "/members — участники команды (удалить, не считать себя)\n" +
     "/leave — выйти из команды\n" +
@@ -122,6 +123,11 @@ const ru = {
     "{team}: на тренировку {when} пока идут {going} из {needed}. Не хватает: {missing}.",
   alert_unanswered: "Ещё не ответили: {names}.",
   org_full: "✅ {team}: на тренировку {when} набралось нужное число игроков: {count}.",
+  cancel_choose: "Какую тренировку отменить?",
+  cancel_none: "Нет ближайших тренировок, которые можно отменить.",
+  cancel_confirm: "Отменить тренировку {when} ({team})? В группу уйдёт сообщение об отмене.",
+  cancel_yes: "Да, отменить",
+  cancel_gone: "Эта тренировка уже отменена или прошла.",
   btn_call: "Позвать ещё в группе",
   btn_invite_text: "Текст для приглашения",
   call_group:
@@ -208,6 +214,7 @@ const en: typeof ru = {
     "/schedule — the schedule\n" +
     "/timing POLL REMINDER — how many hours before to post (default 48 and 24)\n" +
     "/newtraining DD.MM HH:MM PLACES Place — a one-off training\n" +
+    "/canceltraining — cancel a training\n" +
     "/login — sign-in link for the website\n" +
     "/members — team members (remove, mark yourself as not playing)\n" +
     "/leave — leave a team\n" +
@@ -300,6 +307,11 @@ const en: typeof ru = {
     "{team}: for the training on {when}, {going} of {needed} are going. Missing: {missing}.",
   alert_unanswered: "No answer yet: {names}.",
   org_full: "✅ {team}: enough players for the training on {when}: {count}.",
+  cancel_choose: "Which training do you want to cancel?",
+  cancel_none: "There are no upcoming trainings to cancel.",
+  cancel_confirm: "Cancel the training {when} ({team})? A cancellation message will be sent to the group.",
+  cancel_yes: "Yes, cancel it",
+  cancel_gone: "This training is already cancelled or has passed.",
   btn_call: "Call for players in the group",
   btn_invite_text: "Invitation text",
   call_group:
@@ -386,6 +398,7 @@ const et: typeof ru = {
     "/schedule — ajakava\n" +
     "/timing KÜSITLUS MEELDETULETUS — mitu tundi enne postitada (vaikimisi 48 ja 24)\n" +
     "/newtraining PP.KK HH:MM PLACES Koht — ühekordne treening\n" +
+    "/canceltraining — tühista treening\n" +
     "/login — sisselogimise link veebisaidile\n" +
     "/members — meeskonna liikmed (eemalda, ära arvesta ennast)\n" +
     "/leave — lahku meeskonnast\n" +
@@ -478,6 +491,11 @@ const et: typeof ru = {
     "{team}: treeninguks {when} tuleb praegu {going}/{needed}. Puudu: {missing}.",
   alert_unanswered: "Pole vastanud: {names}.",
   org_full: "✅ {team}: treeninguks {when} on vajalik arv mängijaid koos: {count}.",
+  cancel_choose: "Millise treeningu soovid tühistada?",
+  cancel_none: "Tühistatavaid tulevasi treeninguid pole.",
+  cancel_confirm: "Kas tühistada treening {when} ({team})? Gruppi saadetakse teade tühistamise kohta.",
+  cancel_yes: "Jah, tühista",
+  cancel_gone: "See treening on juba tühistatud või möödunud.",
   btn_call: "Kutsu gruppi lisamängijaid",
   btn_invite_text: "Kutsetekst",
   call_group:
