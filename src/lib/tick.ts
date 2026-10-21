@@ -160,7 +160,12 @@ export async function runTick(api: Api, onlyTeamId?: string | number) {
 
   // ---------- D. «Отвечу позже»: через час снова присылаем опрос тем, кто просил напомнить
   const laters = await sql`
-    select r.training_id, r.user_id, u.telegram_id, u.language, tm.language as team_language
+    select r.training_id, r.user_id, u.telegram_id, u.language, tm.language as team_language,
+           exists (
+             select 1 from memberships m
+             where m.team_id = tr.team_id and m.user_id = r.user_id
+               and m.reserve_order is not null and not m.plays
+           ) as is_reserve
     from rsvps r
     join users u on u.id = r.user_id
     join trainings tr on tr.id = r.training_id
@@ -177,7 +182,7 @@ export async function runTick(api: Api, onlyTeamId?: string | number) {
       returning 1 as ok`;
     if (!claim) continue;
     try {
-      const { text, keyboard } = await render(l.training_id);
+      const { text, keyboard } = await render(l.training_id, { noGuests: !!l.is_reserve });
       const lang: Lang = isLang(l.language) ? l.language : (l.team_language as Lang);
       await api.sendMessage(l.telegram_id, t(lang, "later_reminder") + "\n\n" + text, {
         reply_markup: keyboard,
@@ -242,7 +247,7 @@ export async function runTick(api: Api, onlyTeamId?: string | number) {
         if (!claim) continue;
         try {
           const lang: Lang = isLang(c.language) ? c.language : (tr.language as Lang);
-          const { text, keyboard } = await render(tr.id); // тот же опрос с кнопками «Иду / Не иду»
+          const { text, keyboard } = await render(tr.id, { noGuests: true }); // запасным: только «Иду / Не иду / Отвечу позже»
           const intro = t(lang, "reserve_ask", {
             when: formatWhen(tr.starts_at, tr.timezone, lang),
             team: tr.team_name,

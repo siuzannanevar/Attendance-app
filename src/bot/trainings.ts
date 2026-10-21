@@ -5,18 +5,27 @@ import { ensureUser, tryDelete } from "./helpers";
 import { t, LOCALES, type Lang } from "./i18n";
 import { loadSeats, splitSeats, type Seat } from "@/lib/seats";
 
-function makeKeyboard(trainingId: string | number, lang: Lang) {
-  return new InlineKeyboard()
+// noGuests: у запасных игроков нет кнопки «Иду с кем-то» (только «Иду», «Не иду», «Отвечу позже»)
+function makeKeyboard(trainingId: string | number, lang: Lang, noGuests = false) {
+  const kb = new InlineKeyboard()
     .text(t(lang, "btn_going"), `rsvp:${trainingId}:going`)
     .text(t(lang, "btn_not_going"), `rsvp:${trainingId}:not_going`)
-    .row()
-    .text(t(lang, "btn_guests"), `rsvp:${trainingId}:guests`)
-    .text(t(lang, "btn_later"), `rsvp:${trainingId}:later`);
+    .row();
+  if (!noGuests) kb.text(t(lang, "btn_guests"), `rsvp:${trainingId}:guests`);
+  return kb.text(t(lang, "btn_later"), `rsvp:${trainingId}:later`);
+}
+
+// Запасной игрок: не играет «по умолчанию» и стоит в очереди запасных
+export async function isReserve(teamId: string | number, userId: string | number): Promise<boolean> {
+  const [r] = await sql`
+    select 1 as ok from memberships
+    where team_id = ${teamId} and user_id = ${userId} and reserve_order is not null and not plays`;
+  return !!r;
 }
 
 // Собирает текст сообщения с опросом (на языке команды) и кнопки из данных в базе.
 // «Идут» — первые N мест по порядку нажатий (участники и их гости), остальные в очереди.
-export async function render(trainingId: string | number) {
+export async function render(trainingId: string | number, opts: { noGuests?: boolean } = {}) {
   const [row] = await sql`
     select tr.starts_at, tr.place, tr.needed_players,
            tm.id as team_id, tm.name as team_name, tm.timezone, tm.language
@@ -74,7 +83,7 @@ export async function render(trainingId: string | number) {
 
   return {
     text: lines.filter((l): l is string => l !== null).join("\n"),
-    keyboard: makeKeyboard(trainingId, lang),
+    keyboard: makeKeyboard(trainingId, lang, opts.noGuests),
   };
 }
 

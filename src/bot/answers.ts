@@ -3,7 +3,7 @@ import type { Api, Bot } from "grammy";
 import { sql } from "@/lib/db";
 import { ensureUser } from "./helpers";
 import { t, type Lang } from "./i18n";
-import { render } from "./trainings";
+import { render, isReserve } from "./trainings";
 import { formatWhen } from "./format";
 import { parseGuestNames } from "@/lib/seats";
 import { addGuests, applyAnswer, type AnswerStatus } from "@/lib/rsvp";
@@ -48,7 +48,9 @@ export function registerAnswers(bot: Bot) {
     // Опрос в группе уже обновлён. Если нажали в личной копии (напоминание «позже»), обновляем и её.
     if (ctx.chat?.type === "private") {
       try {
-        const { text, keyboard } = await render(trainingId);
+        const [trRow] = await sql`select team_id from trainings where id = ${trainingId}`;
+        const reserve = trRow ? await isReserve(trRow.team_id, user.id) : false;
+        const { text, keyboard } = await render(trainingId, { noGuests: reserve });
         await ctx.editMessageText(text, { reply_markup: keyboard });
       } catch {
         /* текст не изменился */
