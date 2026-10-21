@@ -17,9 +17,10 @@ function isRetryable(e: unknown): boolean {
 //  A) создаёт ближайшие тренировки по расписанию (на 14 дней вперёд);
 //  B) публикует опросы, у которых наступило время;
 //  C) предупреждает организаторов (в личку) о недоборе и пишет, кто ещё не ответил;
-//  D) возвращает «Отвечу позже» через час.
+//  D) возвращает «Отвечу позже» через час;
+//  E) при недоборе пишет запасным игрокам лично, по очереди.
 export async function runTick(api: Api, onlyTeamId?: string | number) {
-  const stats = { created: 0, published: 0, reminded: 0, alerts: 0, laters: 0, errors: 0 };
+  const stats = { created: 0, published: 0, reminded: 0, alerts: 0, laters: 0, reserves: 0, errors: 0 };
   const teamFilter = onlyTeamId ? sql`and tm.id = ${onlyTeamId}` : sql``;
 
   // ---------- A. Создать тренировки по расписанию
@@ -191,6 +192,103 @@ export async function runTick(api: Api, onlyTeamId?: string | number) {
           where training_id = ${l.training_id} and user_id = ${l.user_id}
             and status = 'later' and remind_at is null`;
       }
+    }
+  }
+
+  // ---------- E. Запасные: при недоборе бот сам пишет им лично, по очереди из списка запасных.
+  // Спрашиваем столько человек, сколько не хватает. Кто отказался или не ответил за 2 часа, того заменяет следующий.
+  const short = await sql`
+    select tr.id, tr.team_id, tr.needed_players, tr.starts_at,
+           tm.name as team_name, tm.timezone, tm.language
+    from trainings tr join teams tm on tm.id = tr.team_id
+    where tr.cancelled_at is null and tr.needed_players is not null
+      and tr.poll_message_id > 0
+      and tr.starts_at > now() + interval '1 hour'
+      and tr.starts_at - make_interval(hours => tm.remind_hours_before) <= now()
+      and exists (select 1 from memberships m where m.team_id = tr.team_id and m.reserve_order is not null)
+      ${teamFilter}`;
+
+  for (const tr of short) {
+    try {
+      const missing = Number(tr.needed_players) - (await loadSeats(tr.id)).length;
+      if (missing <= 0) continue;
+
+      // Уже спросили, ответа ждём (не дольше 2 часов)
+      const [waiting] = await sql`
+        select count(*)::int as n from reserve_asks a
+        where a.training_id = ${tr.id} and a.asked_at > now() - interval '2 hours'
+          and not exists (
+            select 1 from rsvps r
+            where r.training_id = a.training_id and r.user_id = a.user_id and r.status in ('going', 'not_going'))`;
+      const need = missing - waiting.n;
+      if (need <= 0) continue;
+
+      const next = await sql`
+        select u.id, u.telegram_id, u.language, u.first_name
+        from memberships m join users u on u.id = m.user_id
+        where m.team_id = ${tr.team_id} and m.reserve_order is not null
+          and not exists (select 1 from reserve_asks a where a.training_id = ${tr.id} and a.user_id = m.user_id)
+          and not exists (
+            select 1 from rsvps r
+            where r.training_id = ${tr.id} and r.user_id = m.user_id and r.status in ('going', 'not_going'))
+        order by m.reserve_order
+        limit ${need}`;
+
+      const asked: string[] = [];
+      for (const c of next) {
+        const [claim] = await sql`
+          insert into reserve_asks (training_id, user_id) values (${tr.id}, ${c.id})
+          on conflict do nothing returning user_id`;
+        if (!claim) continue;
+        try {
+          const lang: Lang = isLang(c.language) ? c.language : (tr.language as Lang);
+          const { text, keyboard } = await render(tr.id); // тот же опрос с кнопками «Иду / Не иду»
+          const intro = t(lang, "reserve_ask", {
+            when: formatWhen(tr.starts_at, tr.timezone, lang),
+            team: tr.team_name,
+          });
+          await api.sendMessage(c.telegram_id, intro + "\n\n" + text, { reply_markup: keyboard });
+          asked.push(c.first_name);
+          stats.reserves++;
+        } catch (e) {
+          console.error("tick reserve:", e);
+          stats.errors++;
+          if (isRetryable(e)) {
+            await sql`delete from reserve_asks where training_id = ${tr.id} and user_id = ${c.id}`; // повторим
+          } else {
+            // не удалось написать (не открывал бота): не ждём его ответа, следующий запасной будет спрошен
+            await sql`
+              update reserve_asks set asked_at = now() - interval '3 hours'
+              where training_id = ${tr.id} and user_id = ${c.id}`;
+          }
+        }
+      }
+
+      // Организаторам: кому из запасных написали
+      if (asked.length > 0) {
+        const admins = await sql`
+          select u.telegram_id, u.language
+          from memberships m join users u on u.id = m.user_id
+          where m.team_id = ${tr.team_id} and m.role = 'admin'`;
+        for (const a of admins) {
+          const lang: Lang = isLang(a.language) ? a.language : (tr.language as Lang);
+          try {
+            await api.sendMessage(
+              a.telegram_id,
+              t(lang, "reserve_org_asked", {
+                when: formatWhen(tr.starts_at, tr.timezone, lang),
+                team: tr.team_name,
+                names: asked.join(", "),
+              })
+            );
+          } catch {
+            /* организатор не начинал диалог с ботом */
+          }
+        }
+      }
+    } catch (e) {
+      console.error("tick reserve step:", e);
+      stats.errors++;
     }
   }
 

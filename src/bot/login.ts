@@ -31,7 +31,7 @@ async function askBrowserLogin(ctx: Context, code: string) {
   const user = await ensureUser(ctx);
   if (ctx.chat?.type !== "private") return ctx.reply(t(user.lang, "private_only"));
   return ctx.reply(t(user.lang, "login_confirm_text"), {
-    reply_markup: new InlineKeyboard().text(t(user.lang, "btn_login_confirm"), `lc:${code}`),
+    reply_markup: new InlineKeyboard().text(t(user.lang, "btn_login_confirm"), `wc:${code}`),
   });
 }
 
@@ -48,7 +48,7 @@ export function registerLogin(bot: Bot) {
   });
 
   // Человек подтвердил вход: браузер, у которого есть секрет этого кода, заберёт сессию
-  bot.callbackQuery(/^lc:([0-9a-f]{32})$/, async (ctx) => {
+  bot.callbackQuery(/^wc:([0-9a-f]{32})$/, async (ctx) => {
     const code = (ctx.match as RegExpMatchArray)[1];
     const user = await ensureUser(ctx);
     if (!isWlCode(code)) return ctx.answerCallbackQuery();

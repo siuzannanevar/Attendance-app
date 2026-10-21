@@ -31,6 +31,7 @@ const ru = {
     "/timing ОПРОС НАПОМИНАНИЕ — за сколько часов публиковать (по умолчанию 48 и 24)\n" +
     "/newtraining ДД.ММ ЧЧ:ММ МЕСТ Место — разовая тренировка\n" +
     "/canceltraining — отменить тренировку\n" +
+    "/reserve — запасные игроки (список и код)\n" +
     "/login — ссылка для входа на сайт\n" +
     "/members — участники команды (удалить, не считать себя)\n" +
     "/leave — выйти из команды\n" +
@@ -128,6 +129,15 @@ const ru = {
   cancel_confirm: "Отменить тренировку {when} ({team})? В группу уйдёт сообщение об отмене.",
   cancel_yes: "Да, отменить",
   cancel_gone: "Эта тренировка уже отменена или прошла.",
+  reserve_title: "Запасные команды «{team}»",
+  reserve_empty: "Пока никого нет.",
+  reserve_list_intro: "Очередь (бот спрашивает сверху вниз):",
+  reserve_code:
+    "Код для запасных: {code}\nПусть напишут боту в личку: /join {code}\nДобавлять их в группу не нужно. Если игроков не хватает, бот сам напишет им лично: «Сможете прийти?». Кнопки ⬆ поднимают человека в очереди, ✖ убирают из запасных.",
+  reserve_choose_team: "Для какой команды?",
+  reserve_joined: "Вы в запасных команды «{name}». Если игроков не хватит, бот напишет вам лично.",
+  reserve_ask: "Не хватает игроков на тренировку {when} ({team}). Сможете прийти?",
+  reserve_org_asked: "Не хватает игроков на тренировку {when} ({team}). Запрос отправлен запасным: {names}.",
   btn_call: "Позвать ещё в группе",
   btn_invite_text: "Текст для приглашения",
   call_group:
@@ -219,6 +229,7 @@ const en: typeof ru = {
     "/timing POLL REMINDER — how many hours before to post (default 48 and 24)\n" +
     "/newtraining DD.MM HH:MM PLACES Place — a one-off training\n" +
     "/canceltraining — cancel a training\n" +
+    "/reserve — substitute players (list and code)\n" +
     "/login — sign-in link for the website\n" +
     "/members — team members (remove, mark yourself as not playing)\n" +
     "/leave — leave a team\n" +
@@ -316,6 +327,15 @@ const en: typeof ru = {
   cancel_confirm: "Cancel the training {when} ({team})? A cancellation message will be sent to the group.",
   cancel_yes: "Yes, cancel it",
   cancel_gone: "This training is already cancelled or has passed.",
+  reserve_title: "Substitutes of “{team}”",
+  reserve_empty: "Nobody yet.",
+  reserve_list_intro: "Queue (the bot asks from top to bottom):",
+  reserve_code:
+    "Substitutes code: {code}\nThey should message the bot privately: /join {code}\nThey do not need to be in the group. If there are not enough players, the bot writes to them personally: “Can you come?”. ⬆ moves a person up the queue, ✖ removes them from substitutes.",
+  reserve_choose_team: "Which team?",
+  reserve_joined: "You are a substitute of team “{name}”. If there are not enough players, the bot will write to you personally.",
+  reserve_ask: "Not enough players for the training {when} ({team}). Can you come?",
+  reserve_org_asked: "Not enough players for the training {when} ({team}). Asked the substitutes: {names}.",
   btn_call: "Call for players in the group",
   btn_invite_text: "Invitation text",
   call_group:
@@ -407,6 +427,7 @@ const et: typeof ru = {
     "/timing KÜSITLUS MEELDETULETUS — mitu tundi enne postitada (vaikimisi 48 ja 24)\n" +
     "/newtraining PP.KK HH:MM PLACES Koht — ühekordne treening\n" +
     "/canceltraining — tühista treening\n" +
+    "/reserve — varumängijad (nimekiri ja kood)\n" +
     "/login — sisselogimise link veebisaidile\n" +
     "/members — meeskonna liikmed (eemalda, ära arvesta ennast)\n" +
     "/leave — lahku meeskonnast\n" +
@@ -504,6 +525,15 @@ const et: typeof ru = {
   cancel_confirm: "Kas tühistada treening {when} ({team})? Gruppi saadetakse teade tühistamise kohta.",
   cancel_yes: "Jah, tühista",
   cancel_gone: "See treening on juba tühistatud või möödunud.",
+  reserve_title: "Meeskonna „{team}” varumängijad",
+  reserve_empty: "Veel pole kedagi.",
+  reserve_list_intro: "Järjekord (bot küsib ülevalt alla):",
+  reserve_code:
+    "Varumängijate kood: {code}\nNad kirjutagu botile privaatsõnumis: /join {code}\nGruppi lisada pole vaja. Kui mängijaid napib, kirjutab bot neile ise: „Kas saad tulla?”. ⬆ tõstab inimese järjekorras ette, ✖ eemaldab varumängijate hulgast.",
+  reserve_choose_team: "Millise meeskonna jaoks?",
+  reserve_joined: "Oled meeskonna „{name}” varumängijate hulgas. Kui mängijaid napib, kirjutab bot sulle.",
+  reserve_ask: "Treeningule {when} ({team}) napib mängijaid. Kas saad tulla?",
+  reserve_org_asked: "Treeningule {when} ({team}) napib mängijaid. Päring saadetud varumängijatele: {names}.",
   btn_call: "Kutsu gruppi lisamängijaid",
   btn_invite_text: "Kutsetekst",
   call_group:

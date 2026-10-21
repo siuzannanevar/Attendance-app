@@ -6,6 +6,7 @@ import { registerSchedule } from "./schedule";
 import { registerMembers } from "./members";
 import { registerLogin } from "./login";
 import { registerAnswers } from "./answers";
+import { registerReserve } from "./reserve";
 
 export const bot = new Bot(process.env.TELEGRAM_BOT_TOKEN!);
 
@@ -16,5 +17,6 @@ registerTrainings(bot);
 registerAnswers(bot);
 registerSchedule(bot);
 registerMembers(bot);
+registerReserve(bot);
 
 bot.catch((err) => console.error("Bot error:", err.error));

@@ -54,10 +54,21 @@ export function registerTeams(bot: Bot) {
     if (!code) return ctx.reply(t(user.lang, "join_usage"));
 
     const [invite] = await sql`
-      select i.team_id, i.role, tm.name
+      select i.team_id, i.role, i.reserve, tm.name
       from invite_codes i join teams tm on tm.id = i.team_id
       where i.code = ${code} and i.revoked_at is null`;
     if (!invite) return ctx.reply(t(user.lang, "join_bad"));
+
+    // Код для запасных: человек не играет «по умолчанию», а встаёт в конец очереди запасных
+    if (invite.reserve) {
+      await sql`
+        insert into memberships (team_id, user_id, role, plays, reserve_order)
+        values (${invite.team_id}, ${user.id}, 'player', false,
+                (select coalesce(max(reserve_order), 0) + 1 from memberships where team_id = ${invite.team_id}))
+        on conflict (team_id, user_id) do update
+          set reserve_order = coalesce(memberships.reserve_order, excluded.reserve_order)`;
+      return ctx.reply(t(user.lang, "reserve_joined", { name: invite.name }));
+    }
 
     await sql`
       insert into memberships (team_id, user_id, role)
