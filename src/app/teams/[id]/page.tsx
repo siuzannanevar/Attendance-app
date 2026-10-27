@@ -7,6 +7,8 @@ import { wt, type WebKey } from "@/lib/web-i18n";
 import { weekdayShort } from "@/bot/format";
 import { LOCALES, type Lang } from "@/bot/i18n";
 import { loadSeatsMany, splitSeats, type Seat } from "@/lib/seats";
+import TeamCalendar, { type CalItem, type CalKind } from "@/components/TeamCalendar";
+import { createEventAction, deleteEventAction } from "./event-actions";
 import {
   addGuestsAction,
   addScheduleAction,
@@ -56,6 +58,8 @@ const NOTICES: Record<string, { key: WebKey; ok: boolean }> = {
   guests_queue: { key: "n_guests_queue", ok: true },
   guest_removed: { key: "n_guest_removed", ok: true },
   guests_many: { key: "n_guests_many", ok: false },
+  event_created: { key: "n_event_created", ok: true },
+  event_deleted: { key: "n_event_deleted", ok: true },
 };
 
 // Части даты для «карточки-календаря»
@@ -123,6 +127,121 @@ export default async function TeamPage(props: {
         order by (m.role = 'admin') desc, u.first_name`
     : [];
 
+  // ---------- Календарь: тренировки и события команды
+  const tz = team.timezone as string;
+  const dayKey = (d: Date) =>
+    new Intl.DateTimeFormat("en-CA", { timeZone: tz, year: "numeric", month: "2-digit", day: "2-digit" }).format(d);
+  const timeKey = (d: Date) =>
+    new Intl.DateTimeFormat("en-GB", { timeZone: tz, hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).format(d);
+
+  const calTrainings = await sql`
+    select tr.id, tr.starts_at, tr.place, tr.needed_players, tr.cancelled_at,
+      (select status from rsvps r where r.training_id = tr.id and r.user_id = ${user.id}) as my_status
+    from trainings tr
+    where tr.team_id = ${team.id}
+      and tr.starts_at > now() - interval '180 days' and tr.starts_at < now() + interval '400 days'
+    order by tr.starts_at`;
+  // Отменённые не показываем, но помним их время: расписание не должно «воскресить» их в календаре
+  const calActive = calTrainings.filter((x) => !x.cancelled_at);
+  const calSeats = await loadSeatsMany(calActive.map((x) => String(x.id)));
+
+  // Если таблица событий ещё не создана (не выполнена миграция 012), календарь покажет только тренировки
+  let calEvents: { id: string; kind: string; title: string; starts_at: Date; place: string | null; description: string | null }[] = [];
+  try {
+    calEvents = await sql`
+      select id, kind, title, starts_at, place, description
+      from events
+      where team_id = ${team.id}
+        and starts_at > now() - interval '180 days' and starts_at < now() + interval '400 days'
+      order by starts_at`;
+  } catch {
+    calEvents = [];
+  }
+
+  const myCalLabel = (s: string | null) =>
+    s === "going" ? wt(lang, "ans_going") : s === "not_going" ? wt(lang, "ans_not_going") : s === "later" ? wt(lang, "ans_later") : wt(lang, "ans_none");
+
+  const calItems: CalItem[] = [
+    ...calActive.map((tr): CalItem => {
+      const cap = tr.needed_players ? Number(tr.needed_players) : 0;
+      const { confirmed, queue } = splitSeats(calSeats[String(tr.id)] ?? [], cap);
+      return {
+        key: `t${tr.id}`,
+        type: "training",
+        kind: "training",
+        day: dayKey(tr.starts_at),
+        time: timeKey(tr.starts_at),
+        title: "",
+        place: tr.place ?? null,
+        description: null,
+        going: confirmed.length,
+        cap: cap || undefined,
+        free: cap ? Math.max(0, cap - confirmed.length) : undefined,
+        queue: queue.length,
+        my: myCalLabel(tr.my_status ?? null),
+      };
+    }),
+    ...calEvents.map((ev): CalItem => ({
+      key: `e${ev.id}`,
+      type: "event",
+      kind: "tournament",
+      day: dayKey(ev.starts_at),
+      time: timeKey(ev.starts_at),
+      title: ev.title,
+      place: ev.place,
+      description: ev.description,
+      eventId: String(ev.id),
+    })),
+  ];
+  // Будущие тренировки по расписанию, которые бот ещё не создал (он создаёт их за 14 дней)
+  const existingStamps = new Set(calTrainings.map((x) => `${dayKey(x.starts_at)} ${timeKey(x.starts_at)}`));
+  const nowStamp = `${dayKey(new Date())} ${timeKey(new Date())}`;
+  const [by, bm, bd] = dayKey(new Date()).split("-").map(Number);
+  const plannedNote = wt(lang, "schedule_timing", { poll: team.poll_hours_before, remind: team.remind_hours_before });
+  const plannedItems: CalItem[] = [];
+  for (let i = 0; i <= 400; i++) {
+    const dt = new Date(Date.UTC(by, bm - 1, bd + i));
+    const isoDay = dt.getUTCDay() || 7; // 1 = понедельник ... 7 = воскресенье, как в расписании
+    const day = dt.toISOString().slice(0, 10);
+    for (const s of slots) {
+      if (Number(s.weekday) !== isoDay) continue;
+      const time = String(s.start_time).slice(0, 5);
+      const stamp = `${day} ${time}`;
+      if (stamp <= nowStamp || existingStamps.has(stamp)) continue;
+      plannedItems.push({
+        key: `p${s.id}-${day}`,
+        type: "training",
+        kind: "training",
+        day,
+        time,
+        title: "",
+        place: s.place ?? null,
+        description: null,
+        cap: s.needed_players ? Number(s.needed_players) : undefined,
+        planned: true,
+        note: plannedNote,
+      });
+    }
+  }
+  calItems.push(...plannedItems);
+
+  const calKinds: CalKind[] = ["training", "tournament"];
+  const calLabels = {
+    hint: wt(lang, "cal_hint"),
+    empty: wt(lang, "cal_empty"),
+    prev: wt(lang, "cal_prev"),
+    next: wt(lang, "cal_next"),
+    going: wt(lang, "going"),
+    free: wt(lang, "free_spots"),
+    waitlist: wt(lang, "waitlist"),
+    yourAnswer: wt(lang, "your_answer"),
+    planned: wt(lang, "cal_planned"),
+    places: wt(lang, "cal_places"),
+    del: wt(lang, "cal_delete"),
+    confirmDel: wt(lang, "cal_confirm_delete"),
+    kinds: Object.fromEntries(calKinds.map((k) => [k, wt(lang, `kind_${k}` as WebKey)])) as Record<CalKind, string>,
+  };
+
   const answerLabel = (s: string | null) =>
     s === "going" ? wt(lang, "ans_going") : s === "not_going" ? wt(lang, "ans_not_going") : wt(lang, "ans_none");
   const notice = n ? NOTICES[n] : undefined;
@@ -144,6 +263,91 @@ export default async function TeamPage(props: {
         {notice && (
           <div className={notice.ok ? "notice" : "notice notice-err"}>{wt(lang, notice.key)}</div>
         )}
+
+        <section className="section">
+          <div className="section-head">
+            <h2 className="section-title">{wt(lang, "cal_title")}</h2>
+          </div>
+          <div className="card">
+            <TeamCalendar
+              items={calItems}
+              locale={LOCALES[lang]}
+              todayKey={dayKey(new Date())}
+              teamId={String(team.id)}
+              canEdit={isAdmin}
+              deleteAction={deleteEventAction}
+              labels={calLabels}
+            />
+          </div>
+          {isAdmin && (
+            <>
+              <details className="panel">
+                <summary className="btn btn-add">{wt(lang, "new_training")}</summary>
+                <form action={createTrainingAction} className="form">
+                  <input type="hidden" name="team" value={team.id} />
+                  <div className="form-row">
+                    <label className="field">
+                      {wt(lang, "f_date")}
+                      <input type="date" name="date" min={today} required />
+                    </label>
+                    <label className="field">
+                      {wt(lang, "f_time")}
+                      <input type="time" name="time" defaultValue="19:00" required />
+                    </label>
+                  </div>
+                  <div className="form-row">
+                    <label className="field">
+                      {wt(lang, "f_need")}
+                      <input type="number" name="need" min={0} max={999} defaultValue={12} />
+                    </label>
+                    <label className="field">
+                      {wt(lang, "f_place")}
+                      <input type="text" name="place" maxLength={100} />
+                    </label>
+                  </div>
+                  <div>
+                    <button type="submit" className="btn btn-primary">
+                      {wt(lang, "f_create")}
+                    </button>
+                  </div>
+                </form>
+              </details>
+              <details className="panel">
+                <summary className="btn btn-add">{wt(lang, "cal_add_tournament")}</summary>
+                <form action={createEventAction} className="form">
+                  <input type="hidden" name="team" value={team.id} />
+                  <label className="field">
+                    {wt(lang, "cal_f_title")}
+                    <input type="text" name="title" maxLength={120} required />
+                  </label>
+                  <div className="form-row">
+                    <label className="field">
+                      {wt(lang, "f_date")}
+                      <input type="date" name="date" required />
+                    </label>
+                    <label className="field">
+                      {wt(lang, "f_time")}
+                      <input type="time" name="time" defaultValue="10:00" required />
+                    </label>
+                  </div>
+                  <label className="field">
+                    {wt(lang, "f_place")}
+                    <input type="text" name="place" maxLength={100} />
+                  </label>
+                  <label className="field">
+                    {wt(lang, "cal_f_desc")}
+                    <textarea name="description" rows={3} maxLength={1000} />
+                  </label>
+                  <div>
+                    <button type="submit" className="btn btn-primary">
+                      {wt(lang, "cal_f_add")}
+                    </button>
+                  </div>
+                </form>
+              </details>
+            </>
+          )}
+        </section>
 
         <section className="section">
           <div className="section-head">
