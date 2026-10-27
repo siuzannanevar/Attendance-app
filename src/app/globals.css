@@ -539,3 +539,6 @@ details.panel > summary::-webkit-details-marker { display: none; }
 @media (max-width: 520px) {
   .cal-day { min-height: 44px; font-size: 14px; }
 }
+
+/* Кнопки входа: длинные подписи переносятся на узких экранах */
+.auth-card .btn-lg { max-width: 100%; padding: 8px 24px; white-space: normal; text-align: center; line-height: 1.25; }

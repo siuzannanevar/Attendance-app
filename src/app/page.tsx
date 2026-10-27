@@ -35,6 +35,7 @@ export default async function Home({
             botUsername="attendance_team2026_bot"
             labels={{
               button: wt(lang, "login_bot_button"),
+              web: wt(lang, "login_web_button"),
               preparing: wt(lang, "login_preparing"),
               waiting: wt(lang, "login_waiting"),
             }}

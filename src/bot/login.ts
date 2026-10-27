@@ -56,7 +56,10 @@ export function registerLogin(bot: Bot) {
       insert into login_links (secret, user_id) values (${wlKey(code)}, ${user.id})
       on conflict (secret) do update set user_id = excluded.user_id, created_at = now(), used_at = null`;
     try {
-      await ctx.editMessageText(t(user.lang, "login_confirmed"));
+      // кнопка на случай, если вкладка сайта потерялась: сайт сам заберёт вход в этом браузере
+      await ctx.editMessageText(t(user.lang, "login_confirmed"), {
+        reply_markup: new InlineKeyboard().url(t(user.lang, "btn_open_site"), siteUrl()),
+      });
     } catch (e) {
       console.error("editMessageText:", e);
     }

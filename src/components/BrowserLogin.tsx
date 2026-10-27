@@ -9,7 +9,7 @@ export default function BrowserLogin({
   labels,
 }: {
   botUsername: string;
-  labels: { button: string; preparing: string; waiting: string };
+  labels: { button: string; web: string; preparing: string; waiting: string };
 }) {
   const [code, setCode] = useState<string | null>(null);
   const [waiting, setWaiting] = useState(false);
@@ -49,7 +49,7 @@ export default function BrowserLogin({
     }
 
     const timer = setInterval(() => {
-      if (Date.now() - started > 15 * 60 * 1000) {
+      if (Date.now() - started > 30 * 60 * 1000) {
         clearInterval(timer);
         return;
       }
@@ -71,13 +71,26 @@ export default function BrowserLogin({
   return (
     <>
       {code ? (
-        <a
-          href={`https://t.me/${botUsername}?start=lg_${code}`}
-          className="btn btn-primary btn-lg"
-          onClick={() => setWaiting(true)}
-        >
-          {labels.button}
-        </a>
+        <>
+          {/* Для приложения Telegram на компьютере или телефоне: открывается сразу бот, без промежуточной страницы */}
+          <a
+            href={`tg://resolve?domain=${botUsername}&start=lg_${code}`}
+            className="btn btn-primary btn-lg"
+            onClick={() => setWaiting(true)}
+          >
+            {labels.button}
+          </a>
+          {/* Для тех, у кого приложения нет: бот открывается в браузере (Telegram Web) в новой вкладке */}
+          <a
+            href={`https://web.telegram.org/k/#?tgaddr=${encodeURIComponent(`tg://resolve?domain=${botUsername}&start=lg_${code}`)}`}
+            className="btn btn-lg"
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={() => setWaiting(true)}
+          >
+            {labels.web}
+          </a>
+        </>
       ) : (
         <span className="btn btn-primary btn-lg" aria-disabled="true">
           {labels.preparing}
