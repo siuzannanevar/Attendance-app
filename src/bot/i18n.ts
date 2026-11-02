@@ -26,6 +26,7 @@ const ru = {
     "В личном чате со мной:\n" +
     "/newteam Название — создать команду\n" +
     "/join КОД — вступить в команду по коду\n" +
+    "/invite — ссылка-приглашение для игроков (её можно отправить в группу)\n" +
     "/newschedule ДНИ ЧЧ:ММ МЕСТ Место — регулярные тренировки (опросы и напоминания приходят сами)\n" +
     "/schedule — расписание\n" +
     "/timing ОПРОС НАПОМИНАНИЕ — за сколько часов публиковать (по умолчанию 48 и 24)\n" +
@@ -45,13 +46,20 @@ const ru = {
   newteam_private: "Команду лучше создавать в личном чате со мной.",
   newteam_usage: "Напишите название: /newteam Волейбол колледж",
   team_created:
-    "Команда «{name}» создана, вы организатор.\nКод для вступления игроков: {code}\n\n" +
-    "Отправьте этот код игрокам. Они вступают командой /join {code} в личном чате со мной.",
+    "Команда «{name}» создана, вы организатор.\nСсылка-приглашение для игроков: {link}\nИли код: {code}\n\n" +
+    "Отправьте ссылку в группу команды: игроки нажмут на неё и сразу вступят. Код тоже работает: /join {code} в личном чате со мной.",
 
   join_private: "Код лучше отправлять мне в личные сообщения, чтобы его не видела вся группа.",
   join_usage: "Напишите код: /join ABC234",
   join_bad: "Код не найден или отозван.",
   joined: "Вы в команде «{name}».",
+  start_new:
+    "Привет! Я собираю ответы на тренировки.\n\nЧтобы вступить в команду, отправьте мне код от организатора (например, ABC234) или нажмите на ссылку-приглашение в группе.\n\nХотите создать свою команду? Напишите /newteam Название",
+  start_member:
+    "Привет! Вы в командах:\n{teams}\n\nОтвечать на тренировки можно кнопками в группе. Чтобы вступить в другую команду, отправьте мне её код.\n\n/myteams — мои команды · /login — вход на сайт · /leave — выйти из команды · /language — язык",
+  invite_title:
+    "Ссылки-приглашения. Отправьте ссылку в группу команды: игроки нажмут на неё и сразу вступят.",
+  invite_item: "«{team}»\n{link}\nКод: {code}",
 
   no_teams: "Вы пока не состоите ни в одной команде.",
   role_admin: "организатор",
@@ -133,7 +141,7 @@ const ru = {
   reserve_empty: "Пока никого нет.",
   reserve_list_intro: "Очередь (бот спрашивает сверху вниз):",
   reserve_code:
-    "Код для запасных: {code}\nПусть напишут боту в личку: /join {code}\nДобавлять их в группу не нужно. Если игроков не хватает, бот сам напишет им лично: «Сможете прийти?». Кнопки ⬆ поднимают человека в очереди, ✖ убирают из запасных.",
+    "Ссылка для запасных: {link}\nИли код: {code} (/join {code} в личке с ботом)\nДобавлять их в группу не нужно. Если игроков не хватает, бот сам напишет им лично: «Сможете прийти?». Кнопки ⬆ поднимают человека в очереди, ✖ убирают из запасных.",
   reserve_choose_team: "Для какой команды?",
   reserve_joined: "Вы в запасных команды «{name}». Если игроков не хватит, бот напишет вам лично.",
   reserve_ask: "Не хватает игроков на тренировку {when} ({team}). Сможете прийти?",
@@ -224,6 +232,7 @@ const en: typeof ru = {
     "In a private chat with me:\n" +
     "/newteam Name — create a team\n" +
     "/join CODE — join a team with an invite code\n" +
+    "/invite — invite link for players (post it in the group)\n" +
     "/newschedule DAYS HH:MM PLACES Place — recurring trainings (polls and reminders are sent automatically)\n" +
     "/schedule — the schedule\n" +
     "/timing POLL REMINDER — how many hours before to post (default 48 and 24)\n" +
@@ -243,13 +252,20 @@ const en: typeof ru = {
   newteam_private: "Please create a team in a private chat with me.",
   newteam_usage: "Add a name: /newteam College volleyball",
   team_created:
-    "Team “{name}” created, you are the organizer.\nInvite code for players: {code}\n\n" +
-    "Share this code with your players. They join with /join {code} in a private chat with me.",
+    "Team “{name}” created, you are the organizer.\nInvite link for players: {link}\nOr code: {code}\n\n" +
+    "Post the link in the team's group: players tap it and join right away. The code works too: /join {code} in a private chat with me.",
 
   join_private: "Please send the code to me in a private chat so the whole group doesn't see it.",
   join_usage: "Add the code: /join ABC234",
   join_bad: "Code not found or revoked.",
   joined: "You joined “{name}”.",
+  start_new:
+    "Hi! I help teams collect attendance for trainings.\n\nTo join a team, send me the code from your organizer (for example, ABC234) or tap the invite link in your group.\n\nWant to create your own team? Send /newteam Name",
+  start_member:
+    "Hi! You are in these teams:\n{teams}\n\nYou answer trainings with the buttons in the group. To join another team, send me its code.\n\n/myteams — my teams · /login — sign in to the website · /leave — leave a team · /language — language",
+  invite_title:
+    "Invite links. Post a link in the team's group: players tap it and join right away.",
+  invite_item: "“{team}”\n{link}\nCode: {code}",
 
   no_teams: "You are not in any team yet.",
   role_admin: "organizer",
@@ -331,7 +347,7 @@ const en: typeof ru = {
   reserve_empty: "Nobody yet.",
   reserve_list_intro: "Queue (the bot asks from top to bottom):",
   reserve_code:
-    "Substitutes code: {code}\nThey should message the bot privately: /join {code}\nThey do not need to be in the group. If there are not enough players, the bot writes to them personally: “Can you come?”. ⬆ moves a person up the queue, ✖ removes them from substitutes.",
+    "Substitutes link: {link}\nOr code: {code} (/join {code} in a private chat with the bot)\nThey do not need to be in the group. If there are not enough players, the bot writes to them personally: “Can you come?”. ⬆ moves a person up the queue, ✖ removes them from substitutes.",
   reserve_choose_team: "Which team?",
   reserve_joined: "You are a substitute of team “{name}”. If there are not enough players, the bot will write to you personally.",
   reserve_ask: "Not enough players for the training {when} ({team}). Can you come?",
@@ -422,6 +438,7 @@ const et: typeof ru = {
     "Privaatvestluses minuga:\n" +
     "/newteam Nimi — loo meeskond\n" +
     "/join KOOD — liitu meeskonnaga kutsekoodiga\n" +
+    "/invite — kutselink mängijatele (postita see gruppi)\n" +
     "/newschedule PÄEVAD HH:MM PLACES Koht — regulaarsed treeningud (küsitlused ja meeldetuletused tulevad ise)\n" +
     "/schedule — ajakava\n" +
     "/timing KÜSITLUS MEELDETULETUS — mitu tundi enne postitada (vaikimisi 48 ja 24)\n" +
@@ -441,13 +458,20 @@ const et: typeof ru = {
   newteam_private: "Palun loo meeskond minuga privaatvestluses.",
   newteam_usage: "Lisa nimi: /newteam Kolledži võrkpall",
   team_created:
-    "Meeskond „{name}” on loodud, sina oled korraldaja.\nMängijate kutsekood: {code}\n\n" +
-    "Jaga seda koodi mängijatega. Nad liituvad käsuga /join {code} privaatvestluses minuga.",
+    "Meeskond „{name}” on loodud, sina oled korraldaja.\nMängijate kutselink: {link}\nVõi kood: {code}\n\n" +
+    "Postita link meeskonna gruppi: mängijad puudutavad seda ja liituvad kohe. Kood töötab samuti: /join {code} privaatvestluses minuga.",
 
   join_private: "Palun saada kood mulle privaatsõnumina, et kogu grupp seda ei näeks.",
   join_usage: "Lisa kood: /join ABC234",
   join_bad: "Koodi ei leitud või see on tühistatud.",
   joined: "Liitusid meeskonnaga „{name}”.",
+  start_new:
+    "Tere! Aitan meeskondadel treeningutel osalemist kokku koguda.\n\nMeeskonnaga liitumiseks saada mulle korraldaja antud kood (nt ABC234) või puuduta grupis olevat kutselinki.\n\nSoovid luua oma meeskonna? Saada /newteam Nimi",
+  start_member:
+    "Tere! Oled meeskondades:\n{teams}\n\nTreeningutele vastad grupis olevate nuppudega. Teise meeskonnaga liitumiseks saada mulle selle kood.\n\n/myteams — minu meeskonnad · /login — sisene veebisaidile · /leave — lahku meeskonnast · /language — keel",
+  invite_title:
+    "Kutselingid. Postita link meeskonna gruppi: mängijad puudutavad seda ja liituvad kohe.",
+  invite_item: "„{team}”\n{link}\nKood: {code}",
 
   no_teams: "Sa ei kuulu veel ühessegi meeskonda.",
   role_admin: "korraldaja",
@@ -529,7 +553,7 @@ const et: typeof ru = {
   reserve_empty: "Veel pole kedagi.",
   reserve_list_intro: "Järjekord (bot küsib ülevalt alla):",
   reserve_code:
-    "Varumängijate kood: {code}\nNad kirjutagu botile privaatsõnumis: /join {code}\nGruppi lisada pole vaja. Kui mängijaid napib, kirjutab bot neile ise: „Kas saad tulla?”. ⬆ tõstab inimese järjekorras ette, ✖ eemaldab varumängijate hulgast.",
+    "Varumängijate link: {link}\nVõi kood: {code} (/join {code} privaatvestluses botiga)\nGruppi lisada pole vaja. Kui mängijaid napib, kirjutab bot neile ise: „Kas saad tulla?”. ⬆ tõstab inimese järjekorras ette, ✖ eemaldab varumängijate hulgast.",
   reserve_choose_team: "Millise meeskonna jaoks?",
   reserve_joined: "Oled meeskonna „{name}” varumängijate hulgas. Kui mängijaid napib, kirjutab bot sulle.",
   reserve_ask: "Treeningule {when} ({team}) napib mängijaid. Kas saad tulla?",

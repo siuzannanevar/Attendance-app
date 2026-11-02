@@ -2,7 +2,7 @@ import { InlineKeyboard } from "grammy";
 import type { Bot } from "grammy";
 import { randomBytes } from "crypto";
 import { sql } from "@/lib/db";
-import { ensureUser } from "./helpers";
+import { ensureUser, inviteLink } from "./helpers";
 import { t, type Lang } from "./i18n";
 
 // Запасные игроки: люди вне группы, которым бот пишет лично при недоборе (см. шаг E в lib/tick.ts).
@@ -32,7 +32,7 @@ async function reserveCode(teamId: string | number, userId: string): Promise<str
   return code;
 }
 
-async function renderReserve(teamId: string | number, viewerId: string, lang: Lang) {
+async function renderReserve(teamId: string | number, viewerId: string, lang: Lang, botUsername: string) {
   const [tm] = await sql`select name from teams where id = ${teamId}`;
   const rows = await sql`
     select u.id, u.first_name, u.username
@@ -50,7 +50,7 @@ async function renderReserve(teamId: string | number, viewerId: string, lang: La
       .join("\n");
     text += t(lang, "reserve_list_intro") + "\n" + list + "\n\n";
   }
-  text += t(lang, "reserve_code", { code });
+  text += t(lang, "reserve_code", { code, link: inviteLink(botUsername, code) });
 
   const keyboard = new InlineKeyboard();
   rows.forEach((r, i) => {
@@ -73,7 +73,7 @@ export function registerReserve(bot: Bot) {
     if (teams.length === 0) return ctx.reply(t(user.lang, "newtraining_no_admin_team"));
 
     if (teams.length === 1) {
-      const { text, keyboard } = await renderReserve(teams[0].id, user.id, user.lang);
+      const { text, keyboard } = await renderReserve(teams[0].id, user.id, user.lang, ctx.me.username);
       return ctx.reply(text, { reply_markup: keyboard });
     }
     const kb = new InlineKeyboard();
@@ -86,7 +86,7 @@ export function registerReserve(bot: Bot) {
     const teamId = (ctx.match as RegExpMatchArray)[1];
     const user = await ensureUser(ctx);
     if (!(await isAdmin(teamId, user.id))) return ctx.answerCallbackQuery();
-    const { text, keyboard } = await renderReserve(teamId, user.id, user.lang);
+    const { text, keyboard } = await renderReserve(teamId, user.id, user.lang, ctx.me.username);
     try {
       await ctx.editMessageText(text, { reply_markup: keyboard });
     } catch (e) {
@@ -114,7 +114,7 @@ export function registerReserve(bot: Bot) {
       await tx`update memberships set reserve_order = ${a.reserve_order} where team_id = ${teamId} and user_id = ${b.user_id}`;
     });
 
-    const { text, keyboard } = await renderReserve(teamId, user.id, user.lang);
+    const { text, keyboard } = await renderReserve(teamId, user.id, user.lang, ctx.me.username);
     try {
       await ctx.editMessageText(text, { reply_markup: keyboard });
     } catch (e) {
@@ -131,7 +131,7 @@ export function registerReserve(bot: Bot) {
 
     await sql`update memberships set reserve_order = null where team_id = ${teamId} and user_id = ${targetId}`;
 
-    const { text, keyboard } = await renderReserve(teamId, user.id, user.lang);
+    const { text, keyboard } = await renderReserve(teamId, user.id, user.lang, ctx.me.username);
     try {
       await ctx.editMessageText(text, { reply_markup: keyboard });
     } catch (e) {

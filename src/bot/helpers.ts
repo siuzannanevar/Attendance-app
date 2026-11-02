@@ -25,3 +25,8 @@ export async function tryDelete(ctx: Context) {
     /* нет прав — не страшно */
   }
 }
+
+// Ссылка-приглашение: админ группы кидает её в чат, человек жмёт и сразу попадает в бота с кодом.
+export function inviteLink(botUsername: string, code: string) {
+  return `https://t.me/${botUsername}?start=join_${code}`;
+}
