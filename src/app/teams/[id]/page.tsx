@@ -96,7 +96,7 @@ export default async function TeamPage(props: {
   const isOwner = String(team.created_by) === String(user.id);
 
   const slots = await sql`
-    select id, weekday, start_time, place, needed_players
+    select id, weekday, start_time, place, needed_players, week_interval
     from schedules
     where team_id = ${team.id} and active
     order by weekday, start_time`;
@@ -603,7 +603,13 @@ export default async function TeamPage(props: {
                   <span className="slot-day">{weekdayShort(lang, s.weekday)}</span>
                   <span className="row-title">{String(s.start_time).slice(0, 5)}</span>
                   <span className="row-meta">
-                    {[s.needed_players ? String(s.needed_players) : null, s.place].filter(Boolean).join(" · ")}
+                    {[
+                      s.week_interval > 1 ? wt(lang, "every_n_weeks", { n: s.week_interval }) : null,
+                      s.needed_players ? String(s.needed_players) : null,
+                      s.place,
+                    ]
+                      .filter(Boolean)
+                      .join(" · ")}
                   </span>
                   {isAdmin && (
                     <form action={deleteSlotAction} className="row-action">
@@ -642,6 +648,23 @@ export default async function TeamPage(props: {
                       </label>
                     ))}
                   </div>
+                </div>
+                <div className="form-row">
+                  <label className="field">
+                    {wt(lang, "f_repeat")}
+                    <select name="every" defaultValue="1">
+                      <option value="1">{wt(lang, "repeat_weekly")}</option>
+                      {[2, 3, 4].map((n) => (
+                        <option key={n} value={n}>
+                          {wt(lang, "every_n_weeks", { n })}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="day-check">
+                    <input type="checkbox" name="start_next" value="1" />
+                    {wt(lang, "f_start_next")}
+                  </label>
                 </div>
                 <div className="form-row">
                   <label className="field">

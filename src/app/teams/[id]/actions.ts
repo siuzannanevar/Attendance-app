@@ -94,8 +94,14 @@ export async function addScheduleAction(formData: FormData): Promise<void> {
   const place = String(formData.get("place") ?? "").replace(/\s+/g, " ").trim().slice(0, 100);
   if (days.length === 0 || !/^\d{1,2}:\d{2}$/.test(time)) done(teamId, "err");
 
+  // «раз в N недель»: добавляем к дням суффикс /N (и «+» — начать со следующей недели)
+  const every = Number(formData.get("every") ?? 1);
+  const interval = every >= 2 && every <= 4 ? every : 1;
+  const startNext = interval > 1 && formData.get("start_next") === "1";
+  const daysSpec = days.join(",") + (interval > 1 ? `/${interval}${startNext ? "+" : ""}` : "");
+
   const lang: Lang = isLang(user.language) ? user.language : (team.language as Lang);
-  const text = await runAction(bot.api, "schedule", team, user.id, lang, `${days.join(",")} ${time} ${need} ${place}`);
+  const text = await runAction(bot.api, "schedule", team, user.id, lang, `${daysSpec} ${time} ${need} ${place}`);
   const okPrefix = t(lang, "schedule_added", { slots: "", poll: 0, remind: 0 }).slice(0, 12);
   done(teamId, text.startsWith(okPrefix) ? (team.chat_id ? "sched_ok" : "sched_nogroup") : "err");
 }

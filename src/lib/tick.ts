@@ -34,6 +34,8 @@ export async function runTick(api: Api, onlyTeamId?: string | number) {
     cross join lateral (select ((now() at time zone tm.timezone)::date + g.n) as d) x
     where s.active
       and extract(isodow from x.d) = s.weekday
+      and x.d >= s.week_anchor
+      and ((x.d - s.week_anchor) / 7) % s.week_interval = 0
       and ((x.d + s.start_time) at time zone tm.timezone) > now()
       ${teamFilter}
     on conflict (schedule_id, starts_at) do nothing

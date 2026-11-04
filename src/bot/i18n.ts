@@ -108,7 +108,7 @@ const ru = {
   choose_team: "Для какой команды?",
 
   schedule_usage:
-    "Формат: /newschedule ДНИ ЧЧ:ММ МЕСТ Место\nПример: /newschedule ср,пт 19:00 12 Спортзал колледжа\nДни: пн, вт, ср, чт, пт, сб, вс (или цифры 1–7)",
+    "Формат: /newschedule ДНИ ЧЧ:ММ МЕСТ Место\nПример: /newschedule ср,пт 19:00 12 Спортзал колледжа\nДни: пн, вт, ср, чт, пт, сб, вс (или цифры 1–7)\nЧерез неделю: добавьте /2 к дням, например пт/2 (раз в 3 недели — /3, раз в 4 — /4). Чтобы начать со следующей недели, добавьте +: пт/2+",
   schedule_bad_day:
     "Не понимаю день недели «{day}». Используйте: пн, вт, ср, чт, пт, сб, вс или цифры 1–7.",
   schedule_bad_time: "Время указано неверно. Пример: 19:00",
@@ -119,6 +119,8 @@ const ru = {
   schedule_timing_line: "Опрос: за {poll} ч до тренировки · напоминание: за {remind} ч",
   schedule_empty: "Расписания пока нет. Добавьте: /newschedule",
   slot_deleted: "Удалено",
+  every_n_weeks: "раз в {n} нед.",
+  schedule_first: "Ближайшая тренировка: {when}",
 
   timing_usage:
     "Формат: /timing ОПРОС НАПОМИНАНИЕ (в часах до тренировки)\nПример: /timing 48 24 — опрос за 48 ч, напоминание за 24 ч",
@@ -314,7 +316,7 @@ const en: typeof ru = {
   choose_team: "Which team?",
 
   schedule_usage:
-    "Format: /newschedule DAYS HH:MM PLACES Place\nExample: /newschedule wed,fri 19:00 12 College gym\nDays: mon, tue, wed, thu, fri, sat, sun (or numbers 1–7)",
+    "Format: /newschedule DAYS HH:MM PLACES Place\nExample: /newschedule wed,fri 19:00 12 College gym\nDays: mon, tue, wed, thu, fri, sat, sun (or numbers 1–7)\nEvery other week: add /2 to the days, e.g. fri/2 (every 3 weeks — /3, every 4 — /4). To start from next week add +: fri/2+",
   schedule_bad_day:
     "I don't understand the weekday “{day}”. Use: mon, tue, wed, thu, fri, sat, sun or numbers 1–7.",
   schedule_bad_time: "The time looks invalid. Example: 19:00",
@@ -325,6 +327,8 @@ const en: typeof ru = {
   schedule_timing_line: "Poll: {poll} h before training · reminder: {remind} h before",
   schedule_empty: "No schedule yet. Add one: /newschedule",
   slot_deleted: "Deleted",
+  every_n_weeks: "every {n} weeks",
+  schedule_first: "Next training: {when}",
 
   timing_usage:
     "Format: /timing POLL REMINDER (hours before training)\nExample: /timing 48 24 — poll 48 h before, reminder 24 h before",
@@ -520,7 +524,7 @@ const et: typeof ru = {
   choose_team: "Millise meeskonna jaoks?",
 
   schedule_usage:
-    "Vorming: /newschedule PÄEVAD HH:MM PLACES Koht\nNäide: /newschedule k,r 19:00 12 Kolledži spordisaal\nPäevad: e, t, k, n, r, l, p (või numbrid 1–7)",
+    "Vorming: /newschedule PÄEVAD HH:MM PLACES Koht\nNäide: /newschedule k,r 19:00 12 Kolledži spordisaal\nPäevad: e, t, k, n, r, l, p (või numbrid 1–7)\nIga teine nädal: lisa päevadele /2, nt r/2 (iga 3. nädal — /3, iga 4. — /4). Et alustada järgmisest nädalast, lisa +: r/2+",
   schedule_bad_day:
     "Ma ei saa nädalapäevast „{day}” aru. Kasuta: e, t, k, n, r, l, p või numbreid 1–7.",
   schedule_bad_time: "Kellaaeg tundub vale. Näide: 19:00",
@@ -531,6 +535,8 @@ const et: typeof ru = {
   schedule_timing_line: "Küsitlus: {poll} h enne treeningut · meeldetuletus: {remind} h enne",
   schedule_empty: "Ajakava pole veel. Lisa: /newschedule",
   slot_deleted: "Kustutatud",
+  every_n_weeks: "iga {n}. nädal",
+  schedule_first: "Lähim treening: {when}",
 
   timing_usage:
     "Vorming: /timing KÜSITLUS MEELDETULETUS (tunnid enne treeningut)\nNäide: /timing 48 24 — küsitlus 48 h enne, meeldetuletus 24 h enne",

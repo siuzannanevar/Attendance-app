@@ -10,8 +10,8 @@ import { loadSeats } from "@/lib/seats";
 
 type Row = Record<string, any>;
 
-// «ср,пт 19:00 12 Место»
-const SCHEDULE_RE = /^([\p{L}\d]+(?:\s*,\s*[\p{L}\d]+)*)\s+(\d{1,2}):(\d{2})\s+(\d{1,3})\s*(.*)$/u;
+// «ср,пт 19:00 12 Место»; «пт/2 19:00 12 Место» — раз в 2 недели; «пт/2+» — начать со следующей недели
+const SCHEDULE_RE = /^([\p{L}\d]+(?:\s*,\s*[\p{L}\d]+)*(?:\/\d\+?)?)\s+(\d{1,2}):(\d{2})\s+(\d{1,3})\s*(.*)$/u;
 // «48 24»
 const TIMING_RE = /^(\d{1,3})\s+(\d{1,3})$/;
 const pad = (n: number) => String(n).padStart(2, "0");
@@ -49,7 +49,12 @@ export async function runAction(
 
   const m = args.match(SCHEDULE_RE);
   if (!m) return t(lang, "schedule_usage");
-  const parsed = parseWeekdays(m[1]);
+  // «пт/2+» → дни «пт», интервал 2 недели, начать со следующей недели
+  const rep = m[1].match(/^(.*?)(?:\/(\d)(\+)?)?$/)!;
+  const interval = rep[2] ? Number(rep[2]) : 1;
+  const startNext = !!rep[3];
+  if (interval < 1 || interval > 4) return t(lang, "schedule_usage");
+  const parsed = parseWeekdays(rep[1]);
   if ("bad" in parsed) return t(lang, "schedule_bad_day", { day: parsed.bad });
   const hour = Number(m[2]);
   const minute = Number(m[3]);
@@ -58,13 +63,40 @@ export async function runAction(
   const place = m[5].trim();
   const time = `${pad(hour)}:${pad(minute)}`;
 
+  // «Неделя отсчёта»: понедельник той недели, где выпадает ближайшая тренировка (в часовом поясе команды).
+  // Для «+» сдвигаем на неделю вперёд. Одна точка отсчёта на все выбранные дни, чтобы они не «разъехались».
+  const [a] = await sql`
+    select to_char(date_trunc('week', min(x.d)::timestamp)::date + ${startNext ? 7 : 0}::int, 'YYYY-MM-DD') as anchor
+    from teams tm
+    cross join generate_series(0, 13) as g(n)
+    cross join lateral (select ((now() at time zone tm.timezone)::date + g.n) as d) x
+    where tm.id = ${team.id}
+      and extract(isodow from x.d) in ${sql(parsed.days)}
+      and ((x.d + ${time}::time) at time zone tm.timezone) > now()`;
+  const anchor: string = a.anchor;
+
   for (const day of parsed.days) {
     await sql`
-      insert into schedules (team_id, weekday, start_time, place, needed_players, created_by)
-      values (${team.id}, ${day}, ${time}::time, ${place || null}, ${need || null}, ${userId})
+      insert into schedules (team_id, weekday, start_time, place, needed_players, created_by, week_interval, week_anchor)
+      values (${team.id}, ${day}, ${time}::time, ${place || null}, ${need || null}, ${userId},
+              ${interval}, ${anchor}::date)
       on conflict (team_id, weekday, start_time)
-      do update set place = excluded.place, needed_players = excluded.needed_players, active = true`;
+      do update set place = excluded.place, needed_players = excluded.needed_players, active = true,
+                    week_interval = excluded.week_interval, week_anchor = excluded.week_anchor`;
   }
+
+  // Если день уже был в расписании и частота изменилась: убираем будущие тренировки,
+  // которые в новое расписание не попадают (только те, по которым опрос ещё не опубликован)
+  await sql`
+    delete from trainings tr
+    using schedules s, teams tm
+    where tr.schedule_id = s.id and tm.id = s.team_id
+      and s.team_id = ${team.id} and s.start_time = ${time}::time and s.weekday in ${sql(parsed.days)}
+      and tr.poll_message_id is null and tr.starts_at > now()
+      and not (
+        (tr.starts_at at time zone tm.timezone)::date >= s.week_anchor
+        and (((tr.starts_at at time zone tm.timezone)::date - s.week_anchor) / 7) % s.week_interval = 0
+      )`;
 
   // Сразу создаём ближайшие тренировки и публикуем опросы, если уже пора
   try {
@@ -73,12 +105,25 @@ export async function runAction(
     console.error("runTick after newschedule:", e);
   }
 
-  const slots = parsed.days.map((d) => `${weekdayShort(lang, d)} ${time}`).join(", ");
+  let slots = parsed.days.map((d) => `${weekdayShort(lang, d)} ${time}`).join(", ");
+  if (interval > 1) slots += ` (${t(lang, "every_n_weeks", { n: interval })})`;
   let text = t(lang, "schedule_added", {
     slots,
     poll: team.poll_hours_before,
     remind: team.remind_hours_before,
   });
+
+  // Показываем, когда будет ближайшая тренировка — чтобы сразу было видно, с какой недели пошёл отсчёт
+  const [first] = await sql`
+    select tr.starts_at, tm.timezone
+    from trainings tr
+    join schedules s on s.id = tr.schedule_id
+    join teams tm on tm.id = tr.team_id
+    where s.team_id = ${team.id} and s.start_time = ${time}::time and s.weekday in ${sql(parsed.days)}
+      and tr.cancelled_at is null and tr.starts_at > now()
+    order by tr.starts_at
+    limit 1`;
+  if (first) text += "\n" + t(lang, "schedule_first", { when: formatWhen(first.starts_at, first.timezone, lang) });
   if (!team.chat_id) text += "\n\n" + t(lang, "schedule_no_group");
   return text;
 }
@@ -88,7 +133,7 @@ async function renderSchedule(teamId: string | number, lang: Lang, withButtons: 
   const [tm] = await sql`
     select name, poll_hours_before, remind_hours_before from teams where id = ${teamId}`;
   const slots = await sql`
-    select id, weekday, start_time, place, needed_players
+    select id, weekday, start_time, place, needed_players, week_interval
     from schedules
     where team_id = ${teamId} and active
     order by weekday, start_time`;
@@ -101,6 +146,7 @@ async function renderSchedule(teamId: string | number, lang: Lang, withButtons: 
       const time = String(s.start_time).slice(0, 5);
       lines.push(
         `• ${weekdayShort(lang, s.weekday)} ${time}` +
+          (s.week_interval > 1 ? ` · ${t(lang, "every_n_weeks", { n: s.week_interval })}` : "") +
           (s.needed_players ? ` · ${s.needed_players}` : "") +
           (s.place ? ` · ${s.place}` : "")
       );
