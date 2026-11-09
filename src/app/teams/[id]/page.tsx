@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import Header from "@/components/Header";
+import type { MenuItem } from "@/components/NavMenu";
 import { sql } from "@/lib/db";
 import { getCurrentUser, getLang } from "@/lib/session";
 import { wt, type WebKey } from "@/lib/web-i18n";
@@ -24,6 +25,9 @@ import {
 } from "./actions";
 
 export const dynamic = "force-dynamic";
+
+const TABS = ["trainings", "calendar", "schedule", "members"] as const;
+type Tab = (typeof TABS)[number];
 
 // Сообщения после действий: код из адреса → текст и цвет
 const NOTICES: Record<string, { key: WebKey; ok: boolean }> = {
@@ -77,10 +81,10 @@ function dateParts(date: Date, tz: string, lang: Lang) {
 
 export default async function TeamPage(props: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ n?: string }>;
+  searchParams: Promise<{ n?: string; tab?: string }>;
 }) {
   const { id } = await props.params;
-  const { n } = await props.searchParams;
+  const { n, tab: tabParam } = await props.searchParams;
   const user = await getCurrentUser();
   if (!user) redirect("/");
   if (!/^\d+$/.test(id)) notFound();
@@ -94,6 +98,26 @@ export default async function TeamPage(props: {
   if (!team) notFound();
   const isAdmin = team.role === "admin";
   const isOwner = String(team.created_by) === String(user.id);
+
+  // Какая вкладка открыта. После действия (форма → ?n=код) возвращаем на ту вкладку, где эта форма находится.
+  const TAB_BY_NOTICE: Record<string, Tab> = {
+    sched_ok: "schedule", sched_nogroup: "schedule", slot_deleted: "schedule",
+    member_removed: "members", org_added: "members", org_removed: "members",
+    plays_on: "members", plays_off: "members", owner_only: "members", self: "members",
+    event_created: "calendar", event_deleted: "calendar",
+  };
+  const wanted = tabParam ?? (n ? TAB_BY_NOTICE[n] : undefined);
+  let tab: Tab = (TABS as readonly string[]).includes(wanted ?? "") ? (wanted as Tab) : "trainings";
+  if (tab === "members" && !isAdmin) tab = "trainings"; // игрокам вкладка «Участники» недоступна
+
+  const base = `/teams/${id}`;
+  const menuItems: MenuItem[] = [
+    { href: base, label: wt(lang, "nav_trainings"), active: tab === "trainings" },
+    { href: `${base}?tab=calendar`, label: wt(lang, "cal_title"), active: tab === "calendar" },
+    { href: `${base}?tab=schedule`, label: wt(lang, "schedule"), active: tab === "schedule" },
+    ...(isAdmin ? [{ href: `${base}?tab=members`, label: wt(lang, "members"), active: tab === "members" }] : []),
+    { href: "/dashboard", label: wt(lang, "back") },
+  ];
 
   const slots = await sql`
     select id, weekday, start_time, place, needed_players, week_interval
@@ -249,7 +273,16 @@ export default async function TeamPage(props: {
 
   return (
     <>
-      <Header lang={lang} next={`/teams/${id}`} userName={user.first_name} />
+      <Header
+        lang={lang}
+        next={tab === "trainings" ? base : `${base}?tab=${tab}`}
+        userName={user.first_name}
+        menu={{
+          title: team.name,
+          subtitle: isAdmin ? wt(lang, "role_admin") : wt(lang, "role_player"),
+          items: menuItems,
+        }}
+      />
       <main className="container">
         <Link href="/dashboard" className="back">
           {wt(lang, "back")}
@@ -264,6 +297,7 @@ export default async function TeamPage(props: {
           <div className={notice.ok ? "notice" : "notice notice-err"}>{wt(lang, notice.key)}</div>
         )}
 
+        {tab === "calendar" && (
         <section className="section">
           <div className="section-head">
             <h2 className="section-title">{wt(lang, "cal_title")}</h2>
@@ -348,7 +382,9 @@ export default async function TeamPage(props: {
             </>
           )}
         </section>
+        )}
 
+        {tab === "trainings" && (
         <section className="section">
           <div className="section-head">
             <h2 className="section-title">{wt(lang, "upcoming")}</h2>
@@ -589,7 +625,9 @@ export default async function TeamPage(props: {
             </div>
           )}
         </section>
+        )}
 
+        {tab === "schedule" && (
         <section className="section">
           <div className="section-head">
             <h2 className="section-title">{wt(lang, "schedule")}</h2>
@@ -714,8 +752,9 @@ export default async function TeamPage(props: {
             </details>
           )}
         </section>
+        )}
 
-        {isAdmin && (
+        {isAdmin && tab === "members" && (
           <section className="section">
             <div className="section-head">
               <h2 className="section-title">{wt(lang, "members")}</h2>

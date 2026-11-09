@@ -542,3 +542,57 @@ details.panel > summary::-webkit-details-marker { display: none; }
 
 /* Кнопки входа: длинные подписи переносятся на узких экранах */
 .auth-card .btn-lg { max-width: 100%; padding: 8px 24px; white-space: normal; text-align: center; line-height: 1.25; }
+
+/* ---------- меню «три палочки» ---------- */
+.topbar-inner { justify-content: flex-start; }
+.topbar-inner .brand { margin-right: auto; }
+.burger {
+  flex: none;
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  cursor: pointer;
+}
+.burger span { display: block; width: 18px; height: 2px; border-radius: 2px; background: var(--text); }
+.burger:hover { border-color: var(--line-strong); }
+.drawer-wrap { position: fixed; inset: 0; z-index: 100; }
+.drawer-backdrop { position: absolute; inset: 0; background: rgba(0, 0, 0, 0.4); }
+.drawer {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: min(300px, 84vw);
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 0 40px rgba(0, 0, 0, 0.25);
+  display: flex;
+  flex-direction: column;
+  animation: drawer-in 0.18s ease-out;
+}
+@keyframes drawer-in { from { transform: translateX(-100%); } to { transform: none; } }
+.drawer-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 18px 16px 14px 20px;
+  border-bottom: 1px solid var(--line);
+}
+.drawer-titles { min-width: 0; }
+.drawer-title { font-weight: 650; font-size: 17px; letter-spacing: -0.02em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.drawer-sub { font-size: 13px; color: var(--muted); margin-top: 2px; }
+.drawer-close { flex: none; width: 36px; height: 36px; border: 0; border-radius: 10px; background: transparent; color: var(--muted); font-size: 16px; cursor: pointer; }
+.drawer-close:hover { background: var(--none-soft); }
+.drawer-nav { display: flex; flex-direction: column; gap: 2px; padding: 12px; }
+.drawer-item { padding: 12px 14px; border-radius: 12px; font-size: 16px; font-weight: 500; color: var(--text); }
+.drawer-item:hover { background: var(--none-soft); }
+.drawer-item.active { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+.drawer-item:last-child { margin-top: 10px; border-top: 1px solid var(--line); border-radius: 0 0 12px 12px; padding-top: 16px; color: var(--muted); font-size: 14px; }

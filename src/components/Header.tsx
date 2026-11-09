@@ -1,5 +1,6 @@
 import { wt } from "@/lib/web-i18n";
 import type { Lang } from "@/bot/i18n";
+import NavMenu, { type MenuItem } from "./NavMenu";
 
 const LANGS: [Lang, string][] = [
   ["et", "ET"],
@@ -11,14 +12,25 @@ export default function Header({
   lang,
   next,
   userName,
+  menu,
 }: {
   lang: Lang;
   next: string;
   userName?: string;
+  menu?: { title: string; subtitle?: string; items: MenuItem[] };
 }) {
   return (
     <header className="topbar">
       <div className="topbar-inner">
+        {menu && (
+          <NavMenu
+            items={menu.items}
+            title={menu.title}
+            subtitle={menu.subtitle}
+            openLabel={wt(lang, "menu")}
+            closeLabel={wt(lang, "close")}
+          />
+        )}
         <a href="/" className="brand">
           <span className="brand-mark" aria-hidden="true">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
