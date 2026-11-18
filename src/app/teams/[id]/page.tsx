@@ -8,6 +8,7 @@ import { wt, type WebKey } from "@/lib/web-i18n";
 import { weekdayShort } from "@/bot/format";
 import { LOCALES, type Lang } from "@/bot/i18n";
 import { loadSeatsMany, splitSeats, type Seat } from "@/lib/seats";
+import { loadWho } from "@/lib/who";
 import TeamCalendar, { type CalItem, type CalKind } from "@/components/TeamCalendar";
 import { createEventAction, deleteEventAction } from "./event-actions";
 import {
@@ -151,6 +152,8 @@ export default async function TeamPage(props: {
 
   // Места на каждую тренировку: участники и их гости по порядку нажатий
   const seatsByTraining = await loadSeatsMany(trainings.map((x) => String(x.id)));
+  // Организатору: имена тех, кто не идёт, кто ответит позже и кто ещё не ответил
+  const whoByTraining = isAdmin ? await loadWho(trainings.map((x) => String(x.id))) : {};
 
   const members = isAdmin
     ? await sql`
@@ -568,6 +571,43 @@ export default async function TeamPage(props: {
                         </ol>
                       </div>
                     )}
+
+                    {isAdmin && (() => {
+                      const who = whoByTraining[String(tr.id)];
+                      if (!who) return null;
+                      const groups = [
+                        { key: "not_going", title: wt(lang, "not_going"), names: who.not_going, cls: "chip chip-no" },
+                        { key: "later", title: wt(lang, "later_label"), names: who.later, cls: "chip chip-later" },
+                        { key: "no_answer", title: wt(lang, "no_answer"), names: who.no_answer, cls: "chip chip-silent" },
+                      ].filter((g) => g.names.length > 0);
+                      if (groups.length === 0) return null;
+                      const summary = groups.map((g) => `${g.title}: ${g.names.length}`).join(" · ");
+                      return (
+                        <details className="panel roster-details">
+                          <summary className="btn btn-quiet">
+                            {wt(lang, "org_answers")}
+                            <span className="roster-summary">{summary}</span>
+                          </summary>
+                          <div className="roster-org">
+                            <div className="faint small">{wt(lang, "org_view")}</div>
+                            {groups.map((g) => (
+                              <div key={g.key} className="roster">
+                                <div className="roster-title">
+                                  {g.title} · {g.names.length}
+                                </div>
+                                <ul className="chips">
+                                  {g.names.map((name, i) => (
+                                    <li key={`${g.key}-${i}`} className={g.cls}>
+                                      {name}
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            ))}
+                          </div>
+                        </details>
+                      );
+                    })()}
 
                     <div className={`your your-${tr.my_status ?? "none"}`}>
                       {wt(lang, "your_answer")}: <strong>{myLabel}</strong>

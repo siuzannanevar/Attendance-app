@@ -608,3 +608,11 @@ details.panel > summary::-webkit-details-marker { display: none; }
 .group-row.is-editing .form { padding: 0; border: 0; background: transparent; box-shadow: none; }
 .form-actions { display: flex; align-items: center; gap: 16px; }
 a.btn-text { text-decoration: none; }
+
+/* Для организатора: кто не идёт, кто подумает, кто не ответил */
+.roster-org { display: grid; gap: 12px; padding-top: 12px; }
+.roster-details > summary { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; text-align: left; }
+.roster-summary { color: var(--muted); font-size: 13px; font-weight: 500; }
+.chip-no { background: var(--danger-soft); color: var(--danger); }
+.chip-later { background: var(--warn-soft); color: var(--warn); }
+.chip-silent { background: var(--none-soft); color: var(--muted); font-weight: 500; }
