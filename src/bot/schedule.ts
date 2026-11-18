@@ -7,6 +7,7 @@ import { formatWhen, parseWeekdays, weekdayShort } from "./format";
 import { runTick } from "@/lib/tick";
 import { cancelTraining } from "@/lib/rsvp";
 import { loadSeats } from "@/lib/seats";
+import { splitPlaceAndMap } from "@/lib/map-url";
 
 type Row = Record<string, any>;
 
@@ -15,6 +16,8 @@ const SCHEDULE_RE = /^([\p{L}\d]+(?:\s*,\s*[\p{L}\d]+)*(?:\/\d\+?)?)\s+(\d{1,2})
 // «48 24»
 const TIMING_RE = /^(\d{1,3})\s+(\d{1,3})$/;
 const pad = (n: number) => String(n).padStart(2, "0");
+// В расписании ссылки на карты идут обычным текстом: не показываем под ними превью страниц
+const NO_PREVIEW = { link_preview_options: { is_disabled: true } } as const;
 
 async function adminTeams(userId: string): Promise<Row[]> {
   return sql`
@@ -60,7 +63,7 @@ export async function runAction(
   const minute = Number(m[3]);
   if (hour > 23 || minute > 59) return t(lang, "schedule_bad_time");
   const need = Number(m[4]);
-  const place = m[5].trim();
+  const { place, mapUrl } = splitPlaceAndMap(m[5]); // после места можно добавить ссылку на карту
   const time = `${pad(hour)}:${pad(minute)}`;
 
   // «Неделя отсчёта»: понедельник той недели, где выпадает ближайшая тренировка (в часовом поясе команды).
@@ -77,11 +80,11 @@ export async function runAction(
 
   for (const day of parsed.days) {
     await sql`
-      insert into schedules (team_id, weekday, start_time, place, needed_players, created_by, week_interval, week_anchor)
-      values (${team.id}, ${day}, ${time}::time, ${place || null}, ${need || null}, ${userId},
+      insert into schedules (team_id, weekday, start_time, place, map_url, needed_players, created_by, week_interval, week_anchor)
+      values (${team.id}, ${day}, ${time}::time, ${place || null}, ${mapUrl}, ${need || null}, ${userId},
               ${interval}, ${anchor}::date)
       on conflict (team_id, weekday, start_time)
-      do update set place = excluded.place, needed_players = excluded.needed_players, active = true,
+      do update set place = excluded.place, map_url = excluded.map_url, needed_players = excluded.needed_players, active = true,
                     week_interval = excluded.week_interval, week_anchor = excluded.week_anchor`;
   }
 
@@ -133,7 +136,7 @@ async function renderSchedule(teamId: string | number, lang: Lang, withButtons: 
   const [tm] = await sql`
     select name, poll_hours_before, remind_hours_before from teams where id = ${teamId}`;
   const slots = await sql`
-    select id, weekday, start_time, place, needed_players, week_interval
+    select id, weekday, start_time, place, map_url, needed_players, week_interval
     from schedules
     where team_id = ${teamId} and active
     order by weekday, start_time`;
@@ -148,7 +151,8 @@ async function renderSchedule(teamId: string | number, lang: Lang, withButtons: 
         `• ${weekdayShort(lang, s.weekday)} ${time}` +
           (s.week_interval > 1 ? ` · ${t(lang, "every_n_weeks", { n: s.week_interval })}` : "") +
           (s.needed_players ? ` · ${s.needed_players}` : "") +
-          (s.place ? ` · ${s.place}` : "")
+          (s.place ? ` · ${s.place}` : "") +
+          (s.map_url ? `\n   📍 ${s.map_url}` : "")
       );
     }
     lines.push(
@@ -225,7 +229,7 @@ export function registerSchedule(bot: Bot) {
       const [team] = await sql`select id from teams where chat_id = ${ctx.chat.id}`;
       if (!team) return;
       const { text } = await renderSchedule(team.id, user.lang, false);
-      return ctx.reply(text);
+      return ctx.reply(text, NO_PREVIEW);
     }
 
     const teams = await sql`
@@ -237,7 +241,7 @@ export function registerSchedule(bot: Bot) {
 
     for (const tm of teams) {
       const { text, keyboard } = await renderSchedule(tm.id, user.lang, tm.role === "admin");
-      await ctx.reply(text, keyboard ? { reply_markup: keyboard } : undefined);
+      await ctx.reply(text, { ...NO_PREVIEW, ...(keyboard ? { reply_markup: keyboard } : {}) });
     }
   });
 
@@ -261,7 +265,7 @@ export function registerSchedule(bot: Bot) {
     });
     const { text, keyboard } = await renderSchedule(s.team_id, user.lang, true);
     try {
-      await ctx.editMessageText(text, keyboard ? { reply_markup: keyboard } : undefined);
+      await ctx.editMessageText(text, { ...NO_PREVIEW, ...(keyboard ? { reply_markup: keyboard } : {}) });
     } catch (e) {
       console.error("editMessageText:", e);
     }
@@ -366,7 +370,7 @@ export function registerSchedule(bot: Bot) {
     const user = await ensureUser(ctx);
 
     const [tr] = await sql`
-      select tr.id, tr.starts_at, tr.place, tr.needed_players, tr.poll_message_id,
+      select tr.id, tr.starts_at, tr.place, tr.map_url, tr.needed_players, tr.poll_message_id,
              tm.name as team_name, tm.chat_id, tm.language, tm.timezone
       from trainings tr
       join teams tm on tm.id = tr.team_id
@@ -399,7 +403,8 @@ export function registerSchedule(bot: Bot) {
     const invite = t(teamLang, "invite_text", {
       team: tr.team_name,
       when,
-      place: tr.place ? `, 📍 ${tr.place}` : "",
+      // текст пересылают в другие чаты, поэтому ссылку на карту добавляем прямо в него
+      place: tr.place || tr.map_url ? `, 📍 ${[tr.place, tr.map_url].filter(Boolean).join(" ")}` : "",
       missing,
       contact,
     });

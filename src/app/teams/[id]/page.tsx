@@ -44,6 +44,9 @@ const NOTICES: Record<string, { key: WebKey; ok: boolean }> = {
   nogroup: { key: "n_nogroup", ok: false },
   postfail: { key: "n_postfail", ok: false },
   past: { key: "n_past", ok: false },
+  badmap: { key: "n_badmap", ok: false },
+  sched_badmap: { key: "n_badmap", ok: false },
+  event_badmap: { key: "n_badmap", ok: false },
   was_cancelled: { key: "n_was_cancelled", ok: false },
   timing_ok: { key: "n_timing_ok", ok: true },
   timing_bad: { key: "n_timing_bad", ok: false },
@@ -101,10 +104,10 @@ export default async function TeamPage(props: {
 
   // Какая вкладка открыта. После действия (форма → ?n=код) возвращаем на ту вкладку, где эта форма находится.
   const TAB_BY_NOTICE: Record<string, Tab> = {
-    sched_ok: "schedule", sched_nogroup: "schedule", slot_deleted: "schedule",
+    sched_ok: "schedule", sched_nogroup: "schedule", slot_deleted: "schedule", sched_badmap: "schedule",
     member_removed: "members", org_added: "members", org_removed: "members",
     plays_on: "members", plays_off: "members", owner_only: "members", self: "members",
-    event_created: "calendar", event_deleted: "calendar",
+    event_created: "calendar", event_deleted: "calendar", event_badmap: "calendar",
   };
   const wanted = tabParam ?? (n ? TAB_BY_NOTICE[n] : undefined);
   let tab: Tab = (TABS as readonly string[]).includes(wanted ?? "") ? (wanted as Tab) : "trainings";
@@ -120,13 +123,13 @@ export default async function TeamPage(props: {
   ];
 
   const slots = await sql`
-    select id, weekday, start_time, place, needed_players, week_interval
+    select id, weekday, start_time, place, map_url, needed_players, week_interval
     from schedules
     where team_id = ${team.id} and active
     order by weekday, start_time`;
 
   const trainings = await sql`
-    select tr.id, tr.starts_at, tr.place, tr.needed_players,
+    select tr.id, tr.starts_at, tr.place, tr.map_url, tr.needed_players,
       (select count(*)::int from rsvps r where r.training_id = tr.id and r.status = 'going') as going,
       (select count(*)::int from rsvps r where r.training_id = tr.id and r.status = 'not_going') as not_going,
       (select count(*)::int from rsvps r where r.training_id = tr.id and r.status = 'later') as later,
@@ -159,7 +162,7 @@ export default async function TeamPage(props: {
     new Intl.DateTimeFormat("en-GB", { timeZone: tz, hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).format(d);
 
   const calTrainings = await sql`
-    select tr.id, tr.starts_at, tr.place, tr.needed_players, tr.cancelled_at,
+    select tr.id, tr.starts_at, tr.place, tr.map_url, tr.needed_players, tr.cancelled_at,
       (select status from rsvps r where r.training_id = tr.id and r.user_id = ${user.id}) as my_status
     from trainings tr
     where tr.team_id = ${team.id}
@@ -170,10 +173,10 @@ export default async function TeamPage(props: {
   const calSeats = await loadSeatsMany(calActive.map((x) => String(x.id)));
 
   // Если таблица событий ещё не создана (не выполнена миграция 012), календарь покажет только тренировки
-  let calEvents: { id: string; kind: string; title: string; starts_at: Date; place: string | null; description: string | null }[] = [];
+  let calEvents: { id: string; kind: string; title: string; starts_at: Date; place: string | null; map_url: string | null; description: string | null }[] = [];
   try {
     calEvents = await sql`
-      select id, kind, title, starts_at, place, description
+      select id, kind, title, starts_at, place, map_url, description
       from events
       where team_id = ${team.id}
         and starts_at > now() - interval '180 days' and starts_at < now() + interval '400 days'
@@ -197,6 +200,7 @@ export default async function TeamPage(props: {
         time: timeKey(tr.starts_at),
         title: "",
         place: tr.place ?? null,
+        mapUrl: tr.map_url ?? null,
         description: null,
         going: confirmed.length,
         cap: cap || undefined,
@@ -213,6 +217,7 @@ export default async function TeamPage(props: {
       time: timeKey(ev.starts_at),
       title: ev.title,
       place: ev.place,
+      mapUrl: ev.map_url,
       description: ev.description,
       eventId: String(ev.id),
     })),
@@ -240,6 +245,7 @@ export default async function TeamPage(props: {
         time,
         title: "",
         place: s.place ?? null,
+        mapUrl: s.map_url ?? null,
         description: null,
         cap: s.needed_players ? Number(s.needed_players) : undefined,
         planned: true,
@@ -261,6 +267,7 @@ export default async function TeamPage(props: {
     yourAnswer: wt(lang, "your_answer"),
     planned: wt(lang, "cal_planned"),
     places: wt(lang, "cal_places"),
+    map: wt(lang, "map_open"),
     del: wt(lang, "cal_delete"),
     confirmDel: wt(lang, "cal_confirm_delete"),
     kinds: Object.fromEntries(calKinds.map((k) => [k, wt(lang, `kind_${k}` as WebKey)])) as Record<CalKind, string>,
@@ -339,6 +346,10 @@ export default async function TeamPage(props: {
                       <input type="text" name="place" maxLength={100} />
                     </label>
                   </div>
+                  <label className="field">
+                    {wt(lang, "f_map_url")}
+                    <input type="url" name="map_url" maxLength={500} placeholder="https://maps.app.goo.gl/…" />
+                  </label>
                   <div>
                     <button type="submit" className="btn btn-primary">
                       {wt(lang, "f_create")}
@@ -368,7 +379,11 @@ export default async function TeamPage(props: {
                     {wt(lang, "f_place")}
                     <input type="text" name="place" maxLength={100} />
                   </label>
-                  <label className="field">
+                                    <label className="field">
+                    {wt(lang, "f_map_url")}
+                    <input type="url" name="map_url" maxLength={500} placeholder="https://maps.app.goo.gl/…" />
+                  </label>
+<label className="field">
                     {wt(lang, "cal_f_desc")}
                     <textarea name="description" rows={3} maxLength={1000} />
                   </label>
@@ -416,6 +431,10 @@ export default async function TeamPage(props: {
                     <input type="text" name="place" maxLength={100} />
                   </label>
                 </div>
+                <label className="field">
+                  {wt(lang, "f_map_url")}
+                  <input type="url" name="map_url" maxLength={500} placeholder="https://maps.app.goo.gl/…" />
+                </label>
                 <div>
                   <button type="submit" className="btn btn-primary">
                     {wt(lang, "f_create")}
@@ -462,13 +481,18 @@ export default async function TeamPage(props: {
                       </div>
                       <div className="training-info">
                         <div className="training-time">{p.time}</div>
-                        {tr.place && (
+                        {(tr.place || tr.map_url) && (
                           <div className="training-place">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                               <path d="M12 21s7-6.2 7-11.5A7 7 0 0 0 5 9.5C5 14.8 12 21 12 21z" />
                               <circle cx="12" cy="9.5" r="2.5" />
                             </svg>
-                            <span>{tr.place}</span>
+                            {tr.place && <span>{tr.place}</span>}
+                            {tr.map_url && (
+                              <a className="map-link" href={tr.map_url} target="_blank" rel="noopener noreferrer">
+                                {wt(lang, "map_open")}
+                              </a>
+                            )}
                           </div>
                         )}
                       </div>
@@ -649,6 +673,11 @@ export default async function TeamPage(props: {
                       .filter(Boolean)
                       .join(" · ")}
                   </span>
+                  {s.map_url && (
+                    <a className="map-link" href={s.map_url} target="_blank" rel="noopener noreferrer">
+                      📍 {wt(lang, "map_open")}
+                    </a>
+                  )}
                   {isAdmin && (
                     <form action={deleteSlotAction} className="row-action">
                       <input type="hidden" name="team" value={team.id} />
@@ -718,7 +747,11 @@ export default async function TeamPage(props: {
                   {wt(lang, "f_place")}
                   <input type="text" name="place" maxLength={100} />
                 </label>
-                <div>
+                                <label className="field">
+                  {wt(lang, "f_map_url")}
+                  <input type="url" name="map_url" maxLength={500} placeholder="https://maps.app.goo.gl/…" />
+                </label>
+<div>
                   <button type="submit" className="btn btn-primary">
                     {wt(lang, "f_add")}
                   </button>

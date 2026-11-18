@@ -76,7 +76,7 @@ const ru = {
   newtraining_notlinked:
     "Эта группа не привязана к команде, или вы не организатор этой команды. Привязка: /linkgroup",
   newtraining_format:
-    "Формат: /newtraining ДД.ММ ЧЧ:ММ МЕСТ Место\nПример: /newtraining 15.10 19:00 12 Спортзал колледжа",
+    "Формат: /newtraining ДД.ММ ЧЧ:ММ МЕСТ Место\nПример: /newtraining 15.10 19:00 12 Спортзал колледжа\nСсылку на карту (Google Maps и т.п.) можно добавить в конце: под опросом появится кнопка «Открыть на карте».",
   newtraining_baddate: "Похоже, дата или время указаны неверно. Пример: 15.10 19:00",
   newtraining_nodate: "Не получилось определить дату. Пример: 15.10 19:00",
   newtraining_no_admin_team: "Вы не организатор ни одной команды. Создайте команду: /newteam",
@@ -108,7 +108,7 @@ const ru = {
   choose_team: "Для какой команды?",
 
   schedule_usage:
-    "Формат: /newschedule ДНИ ЧЧ:ММ МЕСТ Место\nПример: /newschedule ср,пт 19:00 12 Спортзал колледжа\nДни: пн, вт, ср, чт, пт, сб, вс (или цифры 1–7)\nЧерез неделю: добавьте /2 к дням, например пт/2 (раз в 3 недели — /3, раз в 4 — /4). Чтобы начать со следующей недели, добавьте +: пт/2+",
+    "Формат: /newschedule ДНИ ЧЧ:ММ МЕСТ Место\nПример: /newschedule ср,пт 19:00 12 Спортзал колледжа\nСсылку на карту можно добавить в конце после места.\nДни: пн, вт, ср, чт, пт, сб, вс (или цифры 1–7)\nЧерез неделю: добавьте /2 к дням, например пт/2 (раз в 3 недели — /3, раз в 4 — /4). Чтобы начать со следующей недели, добавьте +: пт/2+",
   schedule_bad_day:
     "Не понимаю день недели «{day}». Используйте: пн, вт, ср, чт, пт, сб, вс или цифры 1–7.",
   schedule_bad_time: "Время указано неверно. Пример: 19:00",
@@ -150,6 +150,7 @@ const ru = {
   reserve_org_asked: "Не хватает игроков на тренировку {when} ({team}). Запрос отправлен запасным: {names}.",
   btn_call: "Позвать ещё в группе",
   btn_invite_text: "Текст для приглашения",
+  btn_map: "📍 Открыть на карте",
   call_group:
     "Нужно ещё игроков: {missing}! Тренировка {when}. Нажмите «Иду» в опросе выше или позовите друга.",
   call_sent: "Отправлено в группу.",
@@ -284,7 +285,7 @@ const en: typeof ru = {
   newtraining_notlinked:
     "This group is not linked to a team, or you are not an organizer of that team. Link it with /linkgroup",
   newtraining_format:
-    "Format: /newtraining DD.MM HH:MM PLACES Place\nExample: /newtraining 15.10 19:00 12 College gym",
+    "Format: /newtraining DD.MM HH:MM PLACES Place\nExample: /newtraining 15.10 19:00 12 College gym\nYou can add a map link (Google Maps etc.) at the end: the poll will get an “Open on map” button.",
   newtraining_baddate: "The date or time looks invalid. Example: 15.10 19:00",
   newtraining_nodate: "Could not work out the date. Example: 15.10 19:00",
   newtraining_no_admin_team: "You are not an organizer of any team. Create one: /newteam",
@@ -316,7 +317,7 @@ const en: typeof ru = {
   choose_team: "Which team?",
 
   schedule_usage:
-    "Format: /newschedule DAYS HH:MM PLACES Place\nExample: /newschedule wed,fri 19:00 12 College gym\nDays: mon, tue, wed, thu, fri, sat, sun (or numbers 1–7)\nEvery other week: add /2 to the days, e.g. fri/2 (every 3 weeks — /3, every 4 — /4). To start from next week add +: fri/2+",
+    "Format: /newschedule DAYS HH:MM PLACES Place\nExample: /newschedule wed,fri 19:00 12 College gym\nYou can add a map link at the end, after the place.\nDays: mon, tue, wed, thu, fri, sat, sun (or numbers 1–7)\nEvery other week: add /2 to the days, e.g. fri/2 (every 3 weeks — /3, every 4 — /4). To start from next week add +: fri/2+",
   schedule_bad_day:
     "I don't understand the weekday “{day}”. Use: mon, tue, wed, thu, fri, sat, sun or numbers 1–7.",
   schedule_bad_time: "The time looks invalid. Example: 19:00",
@@ -358,6 +359,7 @@ const en: typeof ru = {
   reserve_org_asked: "Not enough players for the training {when} ({team}). Asked the substitutes: {names}.",
   btn_call: "Call for players in the group",
   btn_invite_text: "Invitation text",
+  btn_map: "📍 Open on map",
   call_group:
     "We need {missing} more players! Training {when}. Press “I'm in” in the poll above or bring a friend.",
   call_sent: "Sent to the group.",
@@ -492,7 +494,7 @@ const et: typeof ru = {
   newtraining_notlinked:
     "See grupp pole meeskonnaga seotud või sa pole selle meeskonna korraldaja. Seo grupp käsuga /linkgroup",
   newtraining_format:
-    "Vorming: /newtraining PP.KK HH:MM MÄNGIJAID Koht\nNäide: /newtraining 15.10 19:00 12 Kolledži spordisaal",
+    "Vorming: /newtraining PP.KK HH:MM MÄNGIJAID Koht\nNäide: /newtraining 15.10 19:00 12 Kolledži spordisaal\nLõppu võib lisada kaardilingi (Google Maps vms): küsitluse alla ilmub nupp „Ava kaardil“.",
   newtraining_baddate: "Kuupäev või kellaaeg tundub vale. Näide: 15.10 19:00",
   newtraining_nodate: "Kuupäeva ei õnnestunud tuvastada. Näide: 15.10 19:00",
   newtraining_no_admin_team: "Sa ei ole ühegi meeskonna korraldaja. Loo meeskond: /newteam",
@@ -524,7 +526,7 @@ const et: typeof ru = {
   choose_team: "Millise meeskonna jaoks?",
 
   schedule_usage:
-    "Vorming: /newschedule PÄEVAD HH:MM PLACES Koht\nNäide: /newschedule k,r 19:00 12 Kolledži spordisaal\nPäevad: e, t, k, n, r, l, p (või numbrid 1–7)\nIga teine nädal: lisa päevadele /2, nt r/2 (iga 3. nädal — /3, iga 4. — /4). Et alustada järgmisest nädalast, lisa +: r/2+",
+    "Vorming: /newschedule PÄEVAD HH:MM PLACES Koht\nNäide: /newschedule k,r 19:00 12 Kolledži spordisaal\nKaardilingi võib lisada lõppu, koha järele.\nPäevad: e, t, k, n, r, l, p (või numbrid 1–7)\nIga teine nädal: lisa päevadele /2, nt r/2 (iga 3. nädal — /3, iga 4. — /4). Et alustada järgmisest nädalast, lisa +: r/2+",
   schedule_bad_day:
     "Ma ei saa nädalapäevast „{day}” aru. Kasuta: e, t, k, n, r, l, p või numbreid 1–7.",
   schedule_bad_time: "Kellaaeg tundub vale. Näide: 19:00",
@@ -566,6 +568,7 @@ const et: typeof ru = {
   reserve_org_asked: "Treeningule {when} ({team}) napib mängijaid. Päring saadetud varumängijatele: {names}.",
   btn_call: "Kutsu gruppi lisamängijaid",
   btn_invite_text: "Kutsetekst",
+  btn_map: "📍 Ava kaardil",
   call_group:
     "Vaja on veel {missing} mängijat! Treening {when}. Vajuta ülal küsitluses „Tulen” või too sõber kaasa.",
   call_sent: "Gruppi saadetud.",

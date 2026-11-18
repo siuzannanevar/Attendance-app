@@ -13,6 +13,7 @@ export type CalItem = {
   time: string; // HH:MM
   title: string;
   place: string | null;
+  mapUrl?: string | null; // ссылка на карту (Google Maps и т.п.)
   description: string | null;
   going?: number;
   cap?: number;
@@ -35,6 +36,7 @@ export type CalLabels = {
   yourAnswer: string;
   planned: string;
   places: string;
+  map: string;
   del: string;
   confirmDel: string;
   kinds: Record<CalKind, string>;
@@ -169,6 +171,11 @@ export default function TeamCalendar({ items, locale, todayKey, teamId, canEdit,
                     </div>
                     {it.title && <div className="cal-item-title">{it.title}</div>}
                     {it.place && <div className="cal-item-place">{it.place}</div>}
+                    {it.mapUrl && (
+                      <a className="map-link" href={it.mapUrl} target="_blank" rel="noopener noreferrer">
+                        📍 {labels.map}
+                      </a>
+                    )}
                     {it.description && <p className="cal-item-desc">{it.description}</p>}
                     {it.planned && (
                       <>

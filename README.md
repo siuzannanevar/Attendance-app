@@ -100,7 +100,7 @@ In a private chat with the bot:
 
 In the team's group chat: `/linkgroup`, `/language`, `/help`.
 
-Use `/help` in the bot for the exact argument format of `/newtraining` and `/newschedule`.
+Use `/help` in the bot for the exact argument format of `/newtraining` and `/newschedule`. A map link can be added at the end, after the place.
 
 ## Getting started
 
@@ -228,7 +228,8 @@ scripts/               dev-bot.ts (polling), set-commands.ts
 
 Ideas collected from interviews with team organisers:
 
-- [ ] **Map for places:** a link or map pin for the training or tournament venue, so people can find it.
+- [x] **Map link for places (step 1):** an optional map link (Google Maps, OpenStreetMap…) for trainings, schedule slots and tournaments. In the bot, paste it after the place (`/newtraining 15.10 19:00 12 College gym https://maps.app.goo.gl/…`); on the website there is a separate field. The poll gets an “Open on map” button.
+- [ ] **Map for places (step 2):** store coordinates and show a small OpenStreetMap map on the event page and in the calendar.
 - [ ] **Payment tracking:** organisers mark who has paid, and the bot privately reminds people how much they owe. Planned as an optional per-team setting, because only some teams charge for training.
 - [ ] Automated tests for the seat and queue logic.
 

@@ -4,15 +4,19 @@ import { sql } from "@/lib/db";
 import { ensureUser, tryDelete } from "./helpers";
 import { t, LOCALES, type Lang } from "./i18n";
 import { loadSeats, splitSeats, type Seat } from "@/lib/seats";
+import { splitPlaceAndMap } from "@/lib/map-url";
 
 // noGuests: у запасных игроков нет кнопки «Иду с кем-то» (только «Иду», «Не иду», «Отвечу позже»)
-function makeKeyboard(trainingId: string | number, lang: Lang, noGuests = false) {
+// mapUrl: если у тренировки есть ссылка на карту, под опросом появляется кнопка «📍 Открыть на карте»
+function makeKeyboard(trainingId: string | number, lang: Lang, noGuests = false, mapUrl: string | null = null) {
   const kb = new InlineKeyboard()
     .text(t(lang, "btn_going"), `rsvp:${trainingId}:going`)
     .text(t(lang, "btn_not_going"), `rsvp:${trainingId}:not_going`)
     .row();
   if (!noGuests) kb.text(t(lang, "btn_guests"), `rsvp:${trainingId}:guests`);
-  return kb.text(t(lang, "btn_later"), `rsvp:${trainingId}:later`);
+  kb.text(t(lang, "btn_later"), `rsvp:${trainingId}:later`);
+  if (mapUrl) kb.row().url(t(lang, "btn_map"), mapUrl);
+  return kb;
 }
 
 // Запасной игрок: не играет «по умолчанию» и стоит в очереди запасных
@@ -27,7 +31,7 @@ export async function isReserve(teamId: string | number, userId: string | number
 // «Идут» — первые N мест по порядку нажатий (участники и их гости), остальные в очереди.
 export async function render(trainingId: string | number, opts: { noGuests?: boolean } = {}) {
   const [row] = await sql`
-    select tr.starts_at, tr.place, tr.needed_players,
+    select tr.starts_at, tr.place, tr.map_url, tr.needed_players,
            tm.id as team_id, tm.name as team_name, tm.timezone, tm.language
     from trainings tr join teams tm on tm.id = tr.team_id
     where tr.id = ${trainingId}`;
@@ -83,7 +87,7 @@ export async function render(trainingId: string | number, opts: { noGuests?: boo
 
   return {
     text: lines.filter((l): l is string => l !== null).join("\n"),
-    keyboard: makeKeyboard(trainingId, lang, opts.noGuests),
+    keyboard: makeKeyboard(trainingId, lang, opts.noGuests, row.map_url ?? null),
   };
 }
 
@@ -101,18 +105,21 @@ async function toTimestamp(tz: string, day: number, month: number, hour: number,
   return null;
 }
 
-// Разбор «15.10 19:00 12 Место»
+// Разбор «15.10 19:00 12 Место» (после места можно добавить ссылку на карту)
 const ARGS_RE = /^(\d{1,2})\.(\d{1,2})\s+(\d{1,2}):(\d{2})\s+(\d{1,3})\s*(.*)$/;
 function parseArgs(text: string) {
   const m = text.trim().match(ARGS_RE);
   if (!m) return null;
+  // в конце можно вставить ссылку на карту: «Спортзал https://maps.app.goo.gl/abc»
+  const { place, mapUrl } = splitPlaceAndMap(m[6]);
   return {
     day: Number(m[1]),
     month: Number(m[2]),
     hour: Number(m[3]),
     minute: Number(m[4]),
     need: Number(m[5]),
-    place: m[6].trim(),
+    place,
+    mapUrl,
   };
 }
 
@@ -139,8 +146,8 @@ export async function publishTraining(
   if (!ts) return "nodate";
 
   const [tr] = await sql`
-    insert into trainings (team_id, starts_at, place, needed_players, created_by)
-    values (${team.id}, ${ts}, ${a.place || null}, ${a.need || null}, ${userId})
+    insert into trainings (team_id, starts_at, place, map_url, needed_players, created_by)
+    values (${team.id}, ${ts}, ${a.place || null}, ${a.mapUrl}, ${a.need || null}, ${userId})
     returning id`;
 
   try {

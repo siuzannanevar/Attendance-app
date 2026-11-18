@@ -11,6 +11,7 @@ import { isLang, t, type Lang } from "@/bot/i18n";
 import { addGuests, applyAnswer, cancelTraining, removeGuest } from "@/lib/rsvp";
 import { parseGuestNames } from "@/lib/seats";
 import { runTick } from "@/lib/tick";
+import { normalizeMapUrl } from "@/lib/map-url";
 import { removeMember, setOrganizer, togglePlays } from "@/lib/members";
 
 // Проверяет вход и доступ к команде (admin = true: только организатор)
@@ -68,6 +69,9 @@ export async function createTrainingAction(formData: FormData): Promise<void> {
   const time = String(formData.get("time") ?? "");
   const need = Math.max(0, Math.min(999, Number(formData.get("need") ?? 0) || 0));
   const place = String(formData.get("place") ?? "").replace(/\s+/g, " ").trim().slice(0, 100);
+  const mapRaw = String(formData.get("map_url") ?? "").trim();
+  const mapUrl = mapRaw ? normalizeMapUrl(mapRaw) : null;
+  if (mapRaw && !mapUrl) done(teamId, "badmap");
 
   const d = date.match(/^(\d{4})-(\d{2})-(\d{2})$/);
   const tm = time.match(/^(\d{1,2}):(\d{2})$/);
@@ -78,7 +82,8 @@ export async function createTrainingAction(formData: FormData): Promise<void> {
   const daysAhead = (new Date(date + "T00:00:00Z").getTime() - Date.now()) / 86400000;
   if (date < today || daysAhead > 360) done(teamId, "baddate");
 
-  const argsText = `${Number(d[3])}.${Number(d[2])} ${Number(tm[1])}:${tm[2]} ${need} ${place}`;
+  // ссылка на карту уходит в конце строки, как если бы её вставили в бота: дальше её разберёт общий код
+  const argsText = `${Number(d[3])}.${Number(d[2])} ${Number(tm[1])}:${tm[2]} ${need} ${place} ${mapUrl ?? ""}`;
   const result = await publishTraining(bot.api, team, user.id, argsText);
   done(teamId, result === "ok" ? "created" : result);
 }
@@ -92,6 +97,9 @@ export async function addScheduleAction(formData: FormData): Promise<void> {
   const time = String(formData.get("time") ?? "");
   const need = Math.max(0, Math.min(999, Number(formData.get("need") ?? 0) || 0));
   const place = String(formData.get("place") ?? "").replace(/\s+/g, " ").trim().slice(0, 100);
+  const mapRaw = String(formData.get("map_url") ?? "").trim();
+  const mapUrl = mapRaw ? normalizeMapUrl(mapRaw) : null;
+  if (mapRaw && !mapUrl) done(teamId, "sched_badmap");
   if (days.length === 0 || !/^\d{1,2}:\d{2}$/.test(time)) done(teamId, "err");
 
   // «раз в N недель»: добавляем к дням суффикс /N (и «+» — начать со следующей недели)
@@ -101,7 +109,7 @@ export async function addScheduleAction(formData: FormData): Promise<void> {
   const daysSpec = days.join(",") + (interval > 1 ? `/${interval}${startNext ? "+" : ""}` : "");
 
   const lang: Lang = isLang(user.language) ? user.language : (team.language as Lang);
-  const text = await runAction(bot.api, "schedule", team, user.id, lang, `${daysSpec} ${time} ${need} ${place}`);
+  const text = await runAction(bot.api, "schedule", team, user.id, lang, `${daysSpec} ${time} ${need} ${place} ${mapUrl ?? ""}`);
   const okPrefix = t(lang, "schedule_added", { slots: "", poll: 0, remind: 0 }).slice(0, 12);
   done(teamId, text.startsWith(okPrefix) ? (team.chat_id ? "sched_ok" : "sched_nogroup") : "err");
 }

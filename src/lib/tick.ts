@@ -25,9 +25,9 @@ export async function runTick(api: Api, onlyTeamId?: string | number) {
 
   // ---------- A. Создать тренировки по расписанию
   const created = await sql`
-    insert into trainings (team_id, starts_at, place, needed_players, created_by, schedule_id)
+    insert into trainings (team_id, starts_at, place, map_url, needed_players, created_by, schedule_id)
     select s.team_id, ((x.d + s.start_time) at time zone tm.timezone),
-           s.place, s.needed_players, s.created_by, s.id
+           s.place, s.map_url, s.needed_players, s.created_by, s.id
     from schedules s
     join teams tm on tm.id = s.team_id
     cross join generate_series(0, 14) as g(n)

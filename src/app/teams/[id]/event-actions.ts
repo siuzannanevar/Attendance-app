@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { sql } from "@/lib/db";
 import { getCurrentUser } from "@/lib/session";
+import { normalizeMapUrl } from "@/lib/map-url";
 
 // Только организатор команды
 async function requireAdmin(teamId: string) {
@@ -30,6 +31,9 @@ export async function createEventAction(formData: FormData): Promise<void> {
 
   const title = String(formData.get("title") ?? "").replace(/\s+/g, " ").trim().slice(0, 120);
   const place = String(formData.get("place") ?? "").replace(/\s+/g, " ").trim().slice(0, 100);
+  const mapRaw = String(formData.get("map_url") ?? "").trim();
+  const mapUrl = mapRaw ? normalizeMapUrl(mapRaw) : null;
+  if (mapRaw && !mapUrl) done(teamId, "event_badmap");
   const description = String(formData.get("description") ?? "").replace(/\r\n/g, "\n").trim().slice(0, 1000);
   const date = String(formData.get("date") ?? "");
   const time = String(formData.get("time") ?? "");
@@ -41,10 +45,10 @@ export async function createEventAction(formData: FormData): Promise<void> {
   try {
     // дата и время задаются в часовом поясе команды
     await sql`
-      insert into events (team_id, kind, title, starts_at, place, description, created_by)
+      insert into events (team_id, kind, title, starts_at, place, map_url, description, created_by)
       values (${team.id}, 'tournament', ${title},
               ((${date}::date + ${time}::time) at time zone ${team.timezone}),
-              ${place || null}, ${description || null}, ${user.id})`;
+              ${place || null}, ${mapUrl}, ${description || null}, ${user.id})`;
   } catch {
     done(teamId, "err");
   }

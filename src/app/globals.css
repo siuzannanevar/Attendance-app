@@ -596,3 +596,9 @@ details.panel > summary::-webkit-details-marker { display: none; }
 .drawer-item:hover { background: var(--none-soft); }
 .drawer-item.active { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
 .drawer-item:last-child { margin-top: 10px; border-top: 1px solid var(--line); border-radius: 0 0 12px 12px; padding-top: 16px; color: var(--muted); font-size: 14px; }
+
+/* Ссылка «Открыть на карте» рядом с местом */
+.map-link { color: var(--accent); font-size: 14px; font-weight: 500; text-decoration: none; white-space: nowrap; }
+.map-link:hover { text-decoration: underline; }
+.training-place .map-link { flex: none; }
+.group-row .map-link { margin-left: 8px; }
