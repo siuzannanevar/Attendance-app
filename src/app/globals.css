@@ -602,3 +602,9 @@ details.panel > summary::-webkit-details-marker { display: none; }
 .map-link:hover { text-decoration: underline; }
 .training-place .map-link { flex: none; }
 .group-row .map-link { margin-left: 8px; }
+
+/* Правка дня расписания прямо в списке */
+.group-row.is-editing { display: block; background: var(--accent-soft); }
+.group-row.is-editing .form { padding: 0; border: 0; background: transparent; box-shadow: none; }
+.form-actions { display: flex; align-items: center; gap: 16px; }
+a.btn-text { text-decoration: none; }

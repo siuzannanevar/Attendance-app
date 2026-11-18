@@ -17,6 +17,7 @@ import {
   cancelTrainingAction,
   createTrainingAction,
   deleteSlotAction,
+  updateSlotAction,
   removeGuestAction,
   removeMemberAction,
   setOrganizerAction,
@@ -46,6 +47,9 @@ const NOTICES: Record<string, { key: WebKey; ok: boolean }> = {
   past: { key: "n_past", ok: false },
   badmap: { key: "n_badmap", ok: false },
   sched_badmap: { key: "n_badmap", ok: false },
+  slot_badmap: { key: "n_badmap", ok: false },
+  slot_saved: { key: "n_slot_saved", ok: true },
+  slot_exists: { key: "n_slot_exists", ok: false },
   event_badmap: { key: "n_badmap", ok: false },
   was_cancelled: { key: "n_was_cancelled", ok: false },
   timing_ok: { key: "n_timing_ok", ok: true },
@@ -84,10 +88,10 @@ function dateParts(date: Date, tz: string, lang: Lang) {
 
 export default async function TeamPage(props: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ n?: string; tab?: string }>;
+  searchParams: Promise<{ n?: string; tab?: string; edit?: string }>;
 }) {
   const { id } = await props.params;
-  const { n, tab: tabParam } = await props.searchParams;
+  const { n, tab: tabParam, edit } = await props.searchParams;
   const user = await getCurrentUser();
   if (!user) redirect("/");
   if (!/^\d+$/.test(id)) notFound();
@@ -105,10 +109,12 @@ export default async function TeamPage(props: {
   // Какая вкладка открыта. После действия (форма → ?n=код) возвращаем на ту вкладку, где эта форма находится.
   const TAB_BY_NOTICE: Record<string, Tab> = {
     sched_ok: "schedule", sched_nogroup: "schedule", slot_deleted: "schedule", sched_badmap: "schedule",
+    slot_saved: "schedule", slot_exists: "schedule", slot_badmap: "schedule",
     member_removed: "members", org_added: "members", org_removed: "members",
     plays_on: "members", plays_off: "members", owner_only: "members", self: "members",
     event_created: "calendar", event_deleted: "calendar", event_badmap: "calendar",
   };
+  const editId = isAdmin && edit && /^\d+$/.test(edit) ? edit : null; // какой день расписания сейчас правится
   const wanted = tabParam ?? (n ? TAB_BY_NOTICE[n] : undefined);
   let tab: Tab = (TABS as readonly string[]).includes(wanted ?? "") ? (wanted as Tab) : "trainings";
   if (tab === "members" && !isAdmin) tab = "trainings"; // игрокам вкладка «Участники» недоступна
@@ -660,35 +666,93 @@ export default async function TeamPage(props: {
             <div className="card empty">{wt(lang, "no_schedule")}</div>
           ) : (
             <div className="group">
-              {slots.map((s) => (
-                <div key={s.id} className="group-row">
-                  <span className="slot-day">{weekdayShort(lang, s.weekday)}</span>
-                  <span className="row-title">{String(s.start_time).slice(0, 5)}</span>
-                  <span className="row-meta">
-                    {[
-                      s.week_interval > 1 ? wt(lang, "every_n_weeks", { n: s.week_interval }) : null,
-                      s.needed_players ? String(s.needed_players) : null,
-                      s.place,
-                    ]
-                      .filter(Boolean)
-                      .join(" · ")}
-                  </span>
-                  {s.map_url && (
-                    <a className="map-link" href={s.map_url} target="_blank" rel="noopener noreferrer">
-                      📍 {wt(lang, "map_open")}
-                    </a>
-                  )}
-                  {isAdmin && (
-                    <form action={deleteSlotAction} className="row-action">
+              {slots.map((s) =>
+                editId === String(s.id) ? (
+                  <div key={s.id} className="group-row is-editing">
+                    <form action={updateSlotAction} className="form form-inline">
                       <input type="hidden" name="team" value={team.id} />
                       <input type="hidden" name="slot" value={s.id} />
-                      <button type="submit" className="btn-text btn-danger-text">
-                        {wt(lang, "btn_delete_slot")}
-                      </button>
+                      <div className="form-row">
+                        <label className="field">
+                          {wt(lang, "f_weekday")}
+                          <select name="weekday" defaultValue={String(s.weekday)}>
+                            {[1, 2, 3, 4, 5, 6, 7].map((d) => (
+                              <option key={d} value={d}>
+                                {weekdayShort(lang, d)}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                        <label className="field">
+                          {wt(lang, "f_time")}
+                          <input type="time" name="time" defaultValue={String(s.start_time).slice(0, 5)} required />
+                        </label>
+                      </div>
+                      <div className="form-row">
+                        <label className="field">
+                          {wt(lang, "f_need")}
+                          <input type="number" name="need" min={0} max={999} defaultValue={Number(s.needed_players ?? 0)} />
+                        </label>
+                        <label className="field">
+                          {wt(lang, "f_place")}
+                          <input type="text" name="place" maxLength={100} defaultValue={s.place ?? ""} />
+                        </label>
+                      </div>
+                      <label className="field">
+                        {wt(lang, "f_map_url")}
+                        <input
+                          type="url"
+                          name="map_url"
+                          maxLength={500}
+                          defaultValue={s.map_url ?? ""}
+                          placeholder="https://maps.app.goo.gl/…"
+                        />
+                      </label>
+                      <div className="form-actions">
+                        <button type="submit" className="btn btn-primary">
+                          {wt(lang, "f_save")}
+                        </button>
+                        <Link href={`/teams/${team.id}?tab=schedule`} className="btn-text">
+                          {wt(lang, "btn_cancel_edit")}
+                        </Link>
+                      </div>
                     </form>
-                  )}
-                </div>
-              ))}
+                  </div>
+                ) : (
+                  <div key={s.id} className="group-row">
+                    <span className="slot-day">{weekdayShort(lang, s.weekday)}</span>
+                    <span className="row-title">{String(s.start_time).slice(0, 5)}</span>
+                    <span className="row-meta">
+                      {[
+                        s.week_interval > 1 ? wt(lang, "every_n_weeks", { n: s.week_interval }) : null,
+                        s.needed_players ? String(s.needed_players) : null,
+                        s.place,
+                      ]
+                        .filter(Boolean)
+                        .join(" · ")}
+                    </span>
+                    {s.map_url && (
+                      <a className="map-link" href={s.map_url} target="_blank" rel="noopener noreferrer">
+                        📍 {wt(lang, "map_open")}
+                      </a>
+                    )}
+                    {isAdmin && (
+                      <Link href={`/teams/${team.id}?tab=schedule&edit=${s.id}`} className="btn-text row-action">
+                        {wt(lang, "btn_edit_slot")}
+                      </Link>
+                    )}
+                    {isAdmin && (
+                      <form action={deleteSlotAction} className="row-action">
+                        <input type="hidden" name="team" value={team.id} />
+                        <input type="hidden" name="slot" value={s.id} />
+                        <button type="submit" className="btn-text btn-danger-text">
+                          {wt(lang, "btn_delete_slot")}
+                        </button>
+                      </form>
+                    )}
+                  </div>
+                ),
+              )}
             </div>
           )}
           {slots.length > 0 && (
@@ -747,11 +811,11 @@ export default async function TeamPage(props: {
                   {wt(lang, "f_place")}
                   <input type="text" name="place" maxLength={100} />
                 </label>
-                                <label className="field">
+                <label className="field">
                   {wt(lang, "f_map_url")}
                   <input type="url" name="map_url" maxLength={500} placeholder="https://maps.app.goo.gl/…" />
                 </label>
-<div>
+                <div>
                   <button type="submit" className="btn btn-primary">
                     {wt(lang, "f_add")}
                   </button>

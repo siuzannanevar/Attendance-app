@@ -12,6 +12,7 @@ import { addGuests, applyAnswer, cancelTraining, removeGuest } from "@/lib/rsvp"
 import { parseGuestNames } from "@/lib/seats";
 import { runTick } from "@/lib/tick";
 import { normalizeMapUrl } from "@/lib/map-url";
+import { updateSlot } from "@/lib/slots";
 import { removeMember, setOrganizer, togglePlays } from "@/lib/members";
 
 // Проверяет вход и доступ к команде (admin = true: только организатор)
@@ -132,6 +133,23 @@ export async function deleteSlotAction(formData: FormData): Promise<void> {
     await tx`delete from schedules where id = ${slotId}`;
   });
   done(teamId, "slot_deleted");
+}
+
+// ---------- Изменить день расписания: день недели, время, место, ссылка на карту, число мест
+export async function updateSlotAction(formData: FormData): Promise<void> {
+  const teamId = String(formData.get("team") ?? "");
+  const slotId = String(formData.get("slot") ?? "");
+  const { team } = await requireMember(teamId, true);
+  if (!/^\d+$/.test(slotId)) done(teamId, "err");
+
+  const code = await updateSlot(bot.api, { id: team.id, timezone: team.timezone }, slotId, {
+    weekday: Number(formData.get("weekday")),
+    time: String(formData.get("time") ?? ""),
+    need: Number(formData.get("need") ?? 0) || 0,
+    place: String(formData.get("place") ?? ""),
+    mapUrl: String(formData.get("map_url") ?? ""),
+  });
+  done(teamId, code);
 }
 
 // ---------- Отменить тренировку
